@@ -1,10 +1,15 @@
 package orderbook
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/shopspring/decimal"
+	lane "gopkg.in/oleiade/lane.v1"
 )
 
 type OrderBook struct {
+	deque         *lane.Deque
 	bids          OrderTree
 	asks          OrderTree
 	time          int
@@ -35,21 +40,56 @@ func (orderBook *OrderBook) WorstAsk() (value interface{}, found bool) {
 	return value, found
 }
 
-func (orderBook *OrderBook) ProcessMarketOrder(quote map[string]string, verbose bool) {
+func (orderBook *OrderBook) ProcessOrderList(side string, orderList OrderList, quantityStillToTrade decimal.Decimal, quote map[string]string, verbose bool) (decimal.Decimal, []map[string]string) {
+	quantityToTrade := quantityStillToTrade
+	var trades []map[string]string
 
-	quantity_to_trade, _ := decimal.NewFromString(quote["quantity"])
-	side := quote["side"]
+	for orderList.Length() > 0 && quantityToTrade.GreaterThan(decimal.Zero) {
+		headOrder := orderList.HeadOrder()
+		tradedPrice := headOrder.price
+		counterParty := headOrder.trade_id
+		var newBookQuantity decimal.Decimal
+		var tradedQuantity decimal.Decimal
 
-	if side == "bid" {
-		for (quantity_to_trade.GreaterThan(decimal.Zero)) && (orderBook.asks.Length() > 0) {
+		if quantityToTrade.LessThan(headOrder.quantity) {
+			tradedQuantity = quantityToTrade
+			// Do the transaction
+			newBookQuantity = headOrder.quantity.Sub(quantityToTrade)
+			headOrder.UpdateQuantity(newBookQuantity, headOrder.timestamp)
+			quantityToTrade = decimal.Zero
 
+		} else if quantityToTrade.Equal(headOrder.quantity) {
+			tradedQuantity = quantityToTrade
+			if side == "bid" {
+				orderBook.bids.RemoveOrderById(headOrder.order_id)
+			} else {
+				orderBook.asks.RemoveOrderById(headOrder.order_id)
+			}
+			quantityToTrade = decimal.Zero
+
+		} else {
+			tradedQuantity = headOrder.quantity
+			if side == "bid" {
+				orderBook.bids.RemoveOrderById(headOrder.order_id)
+			} else {
+				orderBook.asks.RemoveOrderById(headOrder.order_id)
+			}
 		}
 
-	} else if side == "ask" {
+		if verbose {
+			fmt.Println("TRADE: Time - %v, Price - %v, Quantity - %v, TradeID - %v, Matching TradeID - %v", orderBook.time, tradedPrice.String(), tradedQuantity.String(), counterParty, quote["trade_id"])
+		}
 
-	} else {
+		transactionRecord := make(map[string]string)
+		transactionRecord["timestamp"] = strconv.Itoa(orderBook.time)
+		transactionRecord["price"] = tradedPrice.String()
+		transactionRecord["quantity"] = tradedQuantity.String()
+		transactionRecord["time"] = strconv.Itoa(orderBook.time)
 
+		orderBook.deque.Append(transactionRecord)
+		trades = append(trades, transactionRecord)
 	}
+	return quantityToTrade, trades
 }
 
 // def process_market_order(self, quote, verbose):
