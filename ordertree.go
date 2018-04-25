@@ -36,8 +36,7 @@ func NewOrderTree() *OrderTree {
 	price_tree := &redblacktreeextended.RedBlackTreeExtended{rbt.NewWith(DecimalComparator)}
 	price_map := make(map[decimal.Decimal]*OrderList)
 	order_map := make(map[string]*Order)
-	dec, _ := decimal.NewFromString("0.0")
-	return &OrderTree{price_tree, price_map, order_map, dec, 0, 0}
+	return &OrderTree{price_tree, price_map, order_map, decimal.Zero, 0, 0}
 }
 
 func (ordertree *OrderTree) Length() int {
