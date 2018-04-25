@@ -176,3 +176,53 @@ func (orderBook *OrderBook) ProcessOrderList(side string, orderList *OrderList, 
 	}
 	return quantityToTrade, trades
 }
+
+func (orderBook *OrderBook) CancelOrder(side string, order_id int) {
+	orderBook.UpdateTime()
+
+	if side == "bid" {
+		if orderBook.bids.OrderExist(strconv.Itoa(order_id)) {
+			orderBook.bids.RemoveOrderById(strconv.Itoa(order_id))
+		}
+	} else {
+		if orderBook.asks.OrderExist(strconv.Itoa(order_id)) {
+			orderBook.asks.RemoveOrderById(strconv.Itoa(order_id))
+		}
+	}
+}
+
+func (orderBook *OrderBook) ModifyOrder(quoteUpdate map[string]string, order_id int) {
+	orderBook.UpdateTime()
+
+	side := quoteUpdate["side"]
+	quoteUpdate["order_id"] = strconv.Itoa(order_id)
+	quoteUpdate["timestamp"] = strconv.Itoa(orderBook.time)
+
+	if side == "bid" {
+		if orderBook.bids.OrderExist(strconv.Itoa(order_id)) {
+			orderBook.bids.UpdateOrder(quoteUpdate)
+		}
+	} else {
+		if orderBook.asks.OrderExist(strconv.Itoa(order_id)) {
+			orderBook.asks.UpdateOrder(quoteUpdate)
+		}
+	}
+}
+
+func (orderBook *OrderBook) VolumeAtPrice(side string, price decimal.Decimal) decimal.Decimal {
+	if side == "bid" {
+		volume := decimal.Zero
+		if orderBook.bids.PriceExist(price) {
+			volume = orderBook.bids.PriceList(price).volume
+		}
+
+		return volume
+
+	} else {
+		volume := decimal.Zero
+		if orderBook.asks.PriceExist(price) {
+			volume = orderBook.asks.PriceList(price).volume
+		}
+		return volume
+	}
+}
