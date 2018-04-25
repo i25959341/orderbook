@@ -19,8 +19,7 @@ type OrderList struct {
 }
 
 func NewOrderList(price decimal.Decimal) *OrderList {
-	dec, _ := decimal.NewFromString("0.0")
-	return &OrderList{head_order: nil, tail_order: nil, length: 0, volume: dec,
+	return &OrderList{head_order: nil, tail_order: nil, length: 0, volume: decimal.Zero,
 		last_order: nil, price: price}
 }
 
