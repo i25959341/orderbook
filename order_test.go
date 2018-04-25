@@ -1,7 +1,6 @@
 package orderbook
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -65,8 +64,6 @@ func TestOrder(t *testing.T) {
 	order := NewOrder(dummyOrder, orderList)
 
 	orderList.AppendOrder(order)
-
-	fmt.Println(order.trade_id)
 
 	order.UpdateQuantity(testQuanity1, testTimestamp1)
 

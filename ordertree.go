@@ -10,7 +10,7 @@ import (
 
 type Comparator func(a, b interface{}) int
 
-func DecimalComparator(a, b interface{}) int {
+func decimalComparator(a, b interface{}) int {
 	aAsserted := a.(decimal.Decimal)
 	bAsserted := b.(decimal.Decimal)
 	switch {
@@ -24,74 +24,74 @@ func DecimalComparator(a, b interface{}) int {
 }
 
 type OrderTree struct {
-	price_tree *redblacktreeextended.RedBlackTreeExtended
-	price_map  map[decimal.Decimal]*OrderList // Dictionary containing price : OrderList object
-	order_map  map[string]*Order              // Dictionary containing order_id : Order object
-	volume     decimal.Decimal                // Contains total quantity from all Orders in tree
-	num_orders int                            // Contains count of Orders in tree
-	depth      int                            // Number of different prices in tree (http://en.wikipedia.org/wiki/Order_book_(trading)#Book_depth)
+	priceTree *redblacktreeextended.RedBlackTreeExtended
+	priceMap  map[string]*OrderList // Dictionary containing price : OrderList object
+	orderMap  map[string]*Order     // Dictionary containing order_id : Order object
+	volume    decimal.Decimal       // Contains total quantity from all Orders in tree
+	numOrders int                   // Contains count of Orders in tree
+	depth     int                   // Number of different prices in tree (http://en.wikipedia.org/wiki/Order_book_(trading)#Book_depth)
 }
 
 func NewOrderTree() *OrderTree {
-	price_tree := &redblacktreeextended.RedBlackTreeExtended{rbt.NewWith(DecimalComparator)}
-	price_map := make(map[decimal.Decimal]*OrderList)
-	order_map := make(map[string]*Order)
-	return &OrderTree{price_tree, price_map, order_map, decimal.Zero, 0, 0}
+	priceTree := &redblacktreeextended.RedBlackTreeExtended{rbt.NewWith(decimalComparator)}
+	priceMap := make(map[string]*OrderList)
+	orderMap := make(map[string]*Order)
+	return &OrderTree{priceTree, priceMap, orderMap, decimal.Zero, 0, 0}
 }
 
 func (ordertree *OrderTree) Length() int {
-	return len(ordertree.order_map)
+	return len(ordertree.orderMap)
 }
 
 func (ordertree *OrderTree) Order(order_id string) *Order {
-	return ordertree.order_map[order_id]
+	return ordertree.orderMap[order_id]
 }
 
 func (ordertree *OrderTree) PriceList(price decimal.Decimal) *OrderList {
-	return ordertree.price_map[price]
+	return ordertree.priceMap[price.String()]
 }
 
 func (ordertree *OrderTree) CreatePrice(price decimal.Decimal) {
 	ordertree.depth = ordertree.depth + 1
-	new_list := NewOrderList(price)
-	ordertree.price_tree.Put(price, new_list)
-	ordertree.price_map[price] = new_list
+	newList := NewOrderList(price)
+	ordertree.priceTree.Put(price, newList)
+	ordertree.priceMap[price.String()] = newList
 }
 
 func (ordertree *OrderTree) RemovePrice(price decimal.Decimal) {
 	ordertree.depth = ordertree.depth - 1
-	ordertree.price_tree.Remove(price)
-	delete(ordertree.price_map, price)
+	ordertree.priceTree.Remove(price)
+	delete(ordertree.priceMap, price.String())
 }
 
 func (ordertree *OrderTree) PriceExist(price decimal.Decimal) bool {
-	if _, ok := ordertree.price_map[price]; ok {
+	if _, ok := ordertree.priceMap[price.String()]; ok {
 		return true
 	}
 	return false
 }
 
 func (ordertree *OrderTree) OrderExist(order_id string) bool {
-	if _, ok := ordertree.order_map[order_id]; ok {
+	if _, ok := ordertree.orderMap[order_id]; ok {
 		return true
 	}
 	return false
 }
 
 func (ordertree *OrderTree) RemoveOrderById(order_id string) {
-	ordertree.num_orders = ordertree.num_orders - 1
-	order := ordertree.order_map[order_id]
+	ordertree.numOrders = ordertree.numOrders - 1
+	order := ordertree.orderMap[order_id]
 	ordertree.volume = ordertree.volume.Sub(order.quantity)
 	order.order_list.RemoveOrder(order)
 	if order.order_list.Length() == 0 {
 		ordertree.RemovePrice(order.price)
 	}
-	delete(ordertree.order_map, order_id)
+	delete(ordertree.orderMap, order_id)
 }
 
 func (ordertree *OrderTree) MaxPrice() (value interface{}, found bool) {
 	if ordertree.depth > 0 {
-		value, found := ordertree.price_tree.GetMax()
+		value, found := ordertree.priceTree.GetMax()
 		return value, found
 	} else {
 		return nil, false
@@ -100,7 +100,7 @@ func (ordertree *OrderTree) MaxPrice() (value interface{}, found bool) {
 
 func (ordertree *OrderTree) MinPrice() (value interface{}, found bool) {
 	if ordertree.depth > 0 {
-		value, found := ordertree.price_tree.GetMin()
+		value, found := ordertree.priceTree.GetMin()
 		return value, found
 	} else {
 		return nil, false
@@ -113,7 +113,7 @@ func (ordertree *OrderTree) MaxPriceList() *OrderList {
 		if err {
 			return nil
 		}
-		return ordertree.price_map[price.(decimal.Decimal)]
+		return ordertree.priceMap[price.(decimal.Decimal).String()]
 	} else {
 		return nil
 	}
@@ -125,17 +125,18 @@ func (ordertree *OrderTree) MinPriceList() *OrderList {
 		if err {
 			return nil
 		}
-		return ordertree.price_map[price.(decimal.Decimal)]
+		return ordertree.priceMap[price.(decimal.Decimal).String()]
 	}
 	return nil
 }
 
 func (ordertree *OrderTree) InsertOrder(quote map[string]string) {
-	order_id := quote["order_id"]
-	if ordertree.OrderExist(order_id) {
-		ordertree.RemoveOrderById(order_id)
+	orderId := quote["order_id"]
+
+	if ordertree.OrderExist(orderId) {
+		ordertree.RemoveOrderById(orderId)
 	}
-	ordertree.num_orders++
+	ordertree.numOrders++
 
 	price, _ := decimal.NewFromString(quote["price"])
 
@@ -143,20 +144,20 @@ func (ordertree *OrderTree) InsertOrder(quote map[string]string) {
 		ordertree.CreatePrice(price)
 	}
 
-	order := NewOrder(quote, ordertree.price_map[price])
-	ordertree.price_map[price].AppendOrder(order)
-	ordertree.order_map[order.order_id] = order
+	order := NewOrder(quote, ordertree.priceMap[price.String()])
+	ordertree.priceMap[price.String()].AppendOrder(order)
+	ordertree.orderMap[order.order_id] = order
 	ordertree.volume = ordertree.volume.Add(order.quantity)
 }
 
 func (ordertree *OrderTree) UpdateOrder(quote map[string]string) {
-	order := ordertree.order_map[quote["order_id"]]
+	order := ordertree.orderMap[quote["order_id"]]
 	original_quantity := order.quantity
 	price, _ := decimal.NewFromString(quote["price"])
 
 	if !price.Equal(order.price) {
 		// Price changed. Remove order and update tree.
-		order_list := ordertree.price_map[order.price]
+		order_list := ordertree.priceMap[order.price.String()]
 		order_list.RemoveOrder(order)
 		if order_list.Length() == 0 {
 			ordertree.RemovePrice(price)
