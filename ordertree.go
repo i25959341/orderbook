@@ -82,8 +82,8 @@ func (ordertree *OrderTree) RemoveOrderById(order_id string) {
 	ordertree.numOrders = ordertree.numOrders - 1
 	order := ordertree.orderMap[order_id]
 	ordertree.volume = ordertree.volume.Sub(order.quantity)
-	order.order_list.RemoveOrder(order)
-	if order.order_list.Length() == 0 {
+	order.orderList.RemoveOrder(order)
+	if order.orderList.Length() == 0 {
 		ordertree.RemovePrice(order.price)
 	}
 	delete(ordertree.orderMap, order_id)
@@ -94,9 +94,9 @@ func (ordertree *OrderTree) MaxPrice() decimal.Decimal {
 		value, found := ordertree.priceTree.GetMax()
 		if found {
 			return value.(*OrderList).price
-		} else {
-			return decimal.Zero
 		}
+		return decimal.Zero
+
 	} else {
 		return decimal.Zero
 	}
@@ -134,10 +134,10 @@ func (ordertree *OrderTree) MinPriceList() *OrderList {
 }
 
 func (ordertree *OrderTree) InsertOrder(quote map[string]string) {
-	orderId := quote["order_id"]
+	orderID := quote["order_id"]
 
-	if ordertree.OrderExist(orderId) {
-		ordertree.RemoveOrderById(orderId)
+	if ordertree.OrderExist(orderID) {
+		ordertree.RemoveOrderById(orderID)
 	}
 	ordertree.numOrders++
 
@@ -149,20 +149,20 @@ func (ordertree *OrderTree) InsertOrder(quote map[string]string) {
 
 	order := NewOrder(quote, ordertree.priceMap[price.String()])
 	ordertree.priceMap[price.String()].AppendOrder(order)
-	ordertree.orderMap[order.order_id] = order
+	ordertree.orderMap[order.orderID] = order
 	ordertree.volume = ordertree.volume.Add(order.quantity)
 }
 
 func (ordertree *OrderTree) UpdateOrder(quote map[string]string) {
 	order := ordertree.orderMap[quote["order_id"]]
-	original_quantity := order.quantity
+	originalQuantity := order.quantity
 	price, _ := decimal.NewFromString(quote["price"])
 
 	if !price.Equal(order.price) {
 		// Price changed. Remove order and update tree.
-		order_list := ordertree.priceMap[order.price.String()]
-		order_list.RemoveOrder(order)
-		if order_list.Length() == 0 {
+		orderList := ordertree.priceMap[order.price.String()]
+		orderList.RemoveOrder(order)
+		if orderList.Length() == 0 {
 			ordertree.RemovePrice(price)
 		}
 		ordertree.InsertOrder(quote)
@@ -171,5 +171,5 @@ func (ordertree *OrderTree) UpdateOrder(quote map[string]string) {
 		timestamp, _ := strconv.Atoi(quote["timestamp"])
 		order.UpdateQuantity(quantity, timestamp)
 	}
-	ordertree.volume = ordertree.volume.Add(order.quantity.Sub(original_quantity))
+	ordertree.volume = ordertree.volume.Add(order.quantity.Sub(originalQuantity))
 }

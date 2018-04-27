@@ -74,13 +74,13 @@ func TestOrderList(t *testing.T) {
 	}
 
 	headOrder := orderList.HeadOrder()
-	if !(headOrder.order_id == "1") {
-		t.Errorf("headorder id incorrect, got: %s, want: %d.", headOrder.order_id, 0)
+	if !(headOrder.orderID == "1") {
+		t.Errorf("headorder id incorrect, got: %s, want: %d.", headOrder.orderID, 0)
 	}
 
 	nextOrder := headOrder.NextOrder()
 
-	if !(nextOrder.order_id == "2") {
-		t.Errorf("Next headorder id incorrect, got: %s, want: %d.", headOrder.NextOrder().order_id, 2)
+	if !(nextOrder.orderID == "2") {
+		t.Errorf("Next headorder id incorrect, got: %s, want: %d.", headOrder.NextOrder().orderID, 2)
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var limit_orders = make([]map[string]string, 0)
+var limitOrders = make([]map[string]string, 0)
 
 func TestNewOrderBook(t *testing.T) {
 	orderBook := NewOrderBook()
@@ -45,7 +45,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder["price"] = "101"
 	dummyOrder["trade_id"] = "100"
 
-	limit_orders = append(limit_orders, dummyOrder)
+	limitOrders = append(limitOrders, dummyOrder)
 
 	dummyOrder1 := make(map[string]string)
 	dummyOrder1["type"] = "limit"
@@ -54,7 +54,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder1["price"] = "103"
 	dummyOrder1["trade_id"] = "101"
 
-	limit_orders = append(limit_orders, dummyOrder1)
+	limitOrders = append(limitOrders, dummyOrder1)
 
 	dummyOrder2 := make(map[string]string)
 	dummyOrder2["type"] = "limit"
@@ -63,7 +63,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder2["price"] = "101"
 	dummyOrder2["trade_id"] = "102"
 
-	limit_orders = append(limit_orders, dummyOrder2)
+	limitOrders = append(limitOrders, dummyOrder2)
 
 	dummyOrder7 := make(map[string]string)
 	dummyOrder7["type"] = "limit"
@@ -72,7 +72,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder7["price"] = "101"
 	dummyOrder7["trade_id"] = "103"
 
-	limit_orders = append(limit_orders, dummyOrder7)
+	limitOrders = append(limitOrders, dummyOrder7)
 
 	dummyOrder3 := make(map[string]string)
 	dummyOrder3["type"] = "limit"
@@ -81,7 +81,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder3["price"] = "99"
 	dummyOrder3["trade_id"] = "100"
 
-	limit_orders = append(limit_orders, dummyOrder3)
+	limitOrders = append(limitOrders, dummyOrder3)
 
 	dummyOrder4 := make(map[string]string)
 	dummyOrder4["type"] = "limit"
@@ -90,7 +90,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder4["price"] = "98"
 	dummyOrder4["trade_id"] = "101"
 
-	limit_orders = append(limit_orders, dummyOrder4)
+	limitOrders = append(limitOrders, dummyOrder4)
 
 	dummyOrder5 := make(map[string]string)
 	dummyOrder5["type"] = "limit"
@@ -99,7 +99,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder5["price"] = "99"
 	dummyOrder5["trade_id"] = "102"
 
-	limit_orders = append(limit_orders, dummyOrder5)
+	limitOrders = append(limitOrders, dummyOrder5)
 
 	dummyOrder6 := make(map[string]string)
 	dummyOrder6["type"] = "limit"
@@ -108,9 +108,9 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder6["price"] = "97"
 	dummyOrder6["trade_id"] = "103"
 
-	limit_orders = append(limit_orders, dummyOrder6)
+	limitOrders = append(limitOrders, dummyOrder6)
 
-	for _, order := range limit_orders {
+	for _, order := range limitOrders {
 		orderBook.ProcessOrder(order, true)
 	}
 

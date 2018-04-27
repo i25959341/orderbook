@@ -28,12 +28,12 @@ func TestNewOrder(t *testing.T) {
 		t.Errorf("price incorrect, got: %d, want: %d.", order.price, testPrice)
 	}
 
-	if !(order.order_id == strconv.Itoa(testOrderId)) {
-		t.Errorf("order id incorrect, got: %s, want: %d.", order.order_id, testOrderId)
+	if !(order.orderID == strconv.Itoa(testOrderId)) {
+		t.Errorf("order id incorrect, got: %s, want: %d.", order.orderID, testOrderId)
 	}
 
-	if !(order.trade_id == strconv.Itoa(testTradeId)) {
-		t.Errorf("trade id incorrect, got: %s, want: %d.", order.trade_id, testTradeId)
+	if !(order.tradeID == strconv.Itoa(testTradeId)) {
+		t.Errorf("trade id incorrect, got: %s, want: %d.", order.tradeID, testTradeId)
 	}
 }
 
@@ -54,10 +54,10 @@ func TestOrder(t *testing.T) {
 	order.UpdateQuantity(testQuanity1, testTimestamp1)
 
 	if !(order.quantity.Equal(testQuanity1)) {
-		t.Errorf("order id incorrect, got: %s, want: %d.", order.order_id, testOrderId)
+		t.Errorf("order id incorrect, got: %s, want: %d.", order.orderID, testOrderId)
 	}
 
 	if !(order.timestamp == testTimestamp1) {
-		t.Errorf("trade id incorrect, got: %s, want: %d.", order.trade_id, testTradeId)
+		t.Errorf("trade id incorrect, got: %s, want: %d.", order.tradeID, testTradeId)
 	}
 }

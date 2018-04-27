@@ -150,18 +150,18 @@ func (orderBook *OrderBook) ProcessOrderList(side string, orderList *OrderList, 
 		} else if quantityToTrade.Equal(headOrder.quantity) {
 			tradedQuantity = quantityToTrade
 			if side == "bid" {
-				orderBook.bids.RemoveOrderById(headOrder.order_id)
+				orderBook.bids.RemoveOrderById(headOrder.orderID)
 			} else {
-				orderBook.asks.RemoveOrderById(headOrder.order_id)
+				orderBook.asks.RemoveOrderById(headOrder.orderID)
 			}
 			quantityToTrade = decimal.Zero
 
 		} else {
 			tradedQuantity = headOrder.quantity
 			if side == "bid" {
-				orderBook.bids.RemoveOrderById(headOrder.order_id)
+				orderBook.bids.RemoveOrderById(headOrder.orderID)
 			} else {
-				orderBook.asks.RemoveOrderById(headOrder.order_id)
+				orderBook.asks.RemoveOrderById(headOrder.orderID)
 			}
 		}
 

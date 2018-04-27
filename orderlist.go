@@ -37,14 +37,14 @@ func (orderlist *OrderList) HeadOrder() *Order {
 
 func (orderlist *OrderList) AppendOrder(order *Order) {
 	if orderlist.Length() == 0 {
-		order.next_order = nil
-		order.prev_order = nil
+		order.nextOrder = nil
+		order.prevOrder = nil
 		orderlist.head_order = order
 		orderlist.tail_order = order
 	} else {
-		order.prev_order = orderlist.tail_order
-		order.next_order = nil
-		orderlist.tail_order.next_order = order
+		order.prevOrder = orderlist.tail_order
+		order.nextOrder = nil
+		orderlist.tail_order.nextOrder = order
 		orderlist.tail_order = order
 	}
 	orderlist.length = orderlist.length + 1
@@ -58,30 +58,30 @@ func (orderlist *OrderList) RemoveOrder(order *Order) {
 		return
 	}
 
-	next_order := order.next_order
-	prev_order := order.prev_order
+	nextOrder := order.nextOrder
+	prevOrder := order.prevOrder
 
-	if next_order != nil && prev_order != nil {
-		next_order.prev_order = prev_order
-		prev_order.next_order = next_order
-	} else if next_order != nil {
-		next_order.prev_order = nil
-		orderlist.head_order = next_order
-	} else if prev_order != nil {
-		prev_order.next_order = nil
-		orderlist.tail_order = prev_order
+	if nextOrder != nil && prevOrder != nil {
+		nextOrder.prevOrder = prevOrder
+		prevOrder.nextOrder = nextOrder
+	} else if nextOrder != nil {
+		nextOrder.prevOrder = nil
+		orderlist.head_order = nextOrder
+	} else if prevOrder != nil {
+		prevOrder.nextOrder = nil
+		orderlist.tail_order = prevOrder
 	}
 }
 
 func (orderlist *OrderList) MoveToTail(order *Order) {
-	if order.prev_order != nil { // This Order is not the first Order in the OrderList
-		order.prev_order.next_order = order.next_order // Link the previous Order to the next Order, then move the Order to tail
+	if order.prevOrder != nil { // This Order is not the first Order in the OrderList
+		order.prevOrder.nextOrder = order.nextOrder // Link the previous Order to the next Order, then move the Order to tail
 	} else { // This Order is the first Order in the OrderList
-		orderlist.head_order = order.next_order // Make next order the first
+		orderlist.head_order = order.nextOrder // Make next order the first
 	}
-	order.next_order.prev_order = order.prev_order
+	order.nextOrder.prevOrder = order.prevOrder
 
 	// Move Order to the last position. Link up the previous last position Order.
-	orderlist.tail_order.next_order = order
+	orderlist.tail_order.nextOrder = order
 	orderlist.tail_order = order
 }
