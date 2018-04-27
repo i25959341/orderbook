@@ -3,21 +3,7 @@ package orderbook
 import (
 	"strconv"
 	"testing"
-
-	"github.com/shopspring/decimal"
 )
-
-var testTimestamp = 123452342343
-var testQuanity, _ = decimal.NewFromString("0.1")
-var testPrice, _ = decimal.NewFromString("0.1")
-var testOrderId = 1
-var testTradeId = 1
-
-var testTimestamp1 = 123452342345
-var testQuanity1, _ = decimal.NewFromString("0.2")
-var testPrice1, _ = decimal.NewFromString("0.1")
-var testOrderId1 = 2
-var testTradeId1 = 2
 
 func TestNewOrder(t *testing.T) {
 	var order_list OrderList

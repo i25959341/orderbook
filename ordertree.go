@@ -89,43 +89,46 @@ func (ordertree *OrderTree) RemoveOrderById(order_id string) {
 	delete(ordertree.orderMap, order_id)
 }
 
-func (ordertree *OrderTree) MaxPrice() (value interface{}, found bool) {
+func (ordertree *OrderTree) MaxPrice() decimal.Decimal {
 	if ordertree.depth > 0 {
 		value, found := ordertree.priceTree.GetMax()
-		return value, found
+		if found {
+			return value.(*OrderList).price
+		} else {
+			return decimal.Zero
+		}
 	} else {
-		return nil, false
+		return decimal.Zero
 	}
 }
 
-func (ordertree *OrderTree) MinPrice() (value interface{}, found bool) {
+func (ordertree *OrderTree) MinPrice() decimal.Decimal {
 	if ordertree.depth > 0 {
 		value, found := ordertree.priceTree.GetMin()
-		return value, found
+		if found {
+			return value.(*OrderList).price
+		} else {
+			return decimal.Zero
+		}
+
 	} else {
-		return nil, false
+		return decimal.Zero
 	}
 }
 
 func (ordertree *OrderTree) MaxPriceList() *OrderList {
 	if ordertree.depth > 0 {
-		price, err := ordertree.MaxPrice()
-		if err {
-			return nil
-		}
-		return ordertree.priceMap[price.(decimal.Decimal).String()]
-	} else {
-		return nil
+		price := ordertree.MaxPrice()
+		return ordertree.priceMap[price.String()]
 	}
+	return nil
+
 }
 
 func (ordertree *OrderTree) MinPriceList() *OrderList {
 	if ordertree.depth > 0 {
-		price, err := ordertree.MinPrice()
-		if err {
-			return nil
-		}
-		return ordertree.priceMap[price.(decimal.Decimal).String()]
+		price := ordertree.MinPrice()
+		return ordertree.priceMap[price.String()]
 	}
 	return nil
 }
