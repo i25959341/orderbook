@@ -140,4 +140,48 @@ func TestOrderBook(t *testing.T) {
 		t.Errorf("orderBook.VolumeAtPrice incorrect, got: %d, want: %d.", orderBook.VolumeAtPrice("bid", decimal.Zero), decimal.Zero)
 	}
 
+	//Submitting a limit order that crosses the opposing best price will result in a trade
+	marketOrder := make(map[string]string)
+	marketOrder["type"] = "limit"
+	marketOrder["side"] = "bid"
+	marketOrder["quantity"] = "2"
+	marketOrder["price"] = "102"
+	marketOrder["trade_id"] = "109"
+
+	trades, order_in_book := orderBook.ProcessOrder(marketOrder, true)
+
+	tradedPrice := trades[0]["price"]
+	tradedQuantity := trades[0]["quantity"]
+
+	if !(tradedPrice == "101" && tradedQuantity == "2" && len(order_in_book) == 0) {
+		t.Errorf("orderBook.ProcessOrder incorrect")
+	}
+
+	// If a limit crosses but is only partially matched, the remaning volume will
+	// be placed in the book as an outstanding order
+	bigOrder := make(map[string]string)
+	bigOrder["type"] = "limit"
+	bigOrder["side"] = "bid"
+	bigOrder["quantity"] = "50"
+	bigOrder["price"] = "102"
+	bigOrder["trade_id"] = "110"
+
+	trades, order_in_book = orderBook.ProcessOrder(bigOrder, true)
+
+	fmt.Println(trades)
+	fmt.Println(order_in_book)
+
+	if !(len(order_in_book) != 0) {
+		t.Errorf("orderBook.ProcessOrder incorrect")
+	}
+
+	// Market orders only require that a user specifies a side (bid or ask), a quantity, and their unique trade id
+	marketOrder = make(map[string]string)
+	marketOrder["type"] = "market"
+	marketOrder["side"] = "ask"
+	marketOrder["quantity"] = "20"
+	marketOrder["trade_id"] = "111"
+
+	trades, order_in_book = orderBook.ProcessOrder(marketOrder, true)
+
 }
