@@ -105,7 +105,7 @@ func (orderBook *OrderBook) ProcessLimitOrder(quote map[string]string, verbose b
 		if quantity_to_trade.GreaterThan(decimal.Zero) {
 			quote["order_id"] = strconv.Itoa(orderBook.nextOrderID)
 			quote["quantity"] = quantity_to_trade.String()
-			orderBook.bids.InsertOrder(quote)
+			orderBook.asks.InsertOrder(quote)
 			order_in_book = quote
 		}
 	}
@@ -119,7 +119,7 @@ func (orderBook *OrderBook) ProcessOrder(quote map[string]string, verbose bool) 
 
 	orderBook.UpdateTime()
 	quote["timestamp"] = strconv.Itoa(orderBook.time)
-	orderBook.nextOrderID += 1
+	orderBook.nextOrderID++
 
 	if order_type == "market" {
 		trades = orderBook.ProcessMarketOrder(quote, verbose)
