@@ -36,7 +36,7 @@ func (o *Order) PrevOrder() *Order {
 }
 
 func (o *Order) UpdateQuantity(newQuantity decimal.Decimal, newTimestamp int) {
-	if newQuantity.GreaterThan(o.quantity) && o.orderList.tail_order != o {
+	if newQuantity.GreaterThan(o.quantity) && o.orderList.tailOrder != o {
 		o.orderList.MoveToTail(o)
 	}
 	o.orderList.volume = o.orderList.volume.Sub(o.quantity.Sub(newQuantity))

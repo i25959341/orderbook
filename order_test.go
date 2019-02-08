@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewOrder(t *testing.T) {
-	var order_list OrderList
+	var orderList OrderList
 	dummyOrder := make(map[string]string)
 	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
 	dummyOrder["quantity"] = testQuanity.String()
@@ -14,7 +14,7 @@ func TestNewOrder(t *testing.T) {
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
 	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
 
-	order := NewOrder(dummyOrder, &order_list)
+	order := NewOrder(dummyOrder, &orderList)
 
 	if !(order.timestamp == testTimestamp) {
 		t.Errorf("Timesmape incorrect, got: %d, want: %d.", order.timestamp, testTimestamp)

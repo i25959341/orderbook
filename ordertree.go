@@ -43,8 +43,8 @@ func (ordertree *OrderTree) Length() int {
 	return len(ordertree.orderMap)
 }
 
-func (ordertree *OrderTree) Order(order_id string) *Order {
-	return ordertree.orderMap[order_id]
+func (ordertree *OrderTree) Order(orderID string) *Order {
+	return ordertree.orderMap[orderID]
 }
 
 func (ordertree *OrderTree) PriceList(price decimal.Decimal) *OrderList {
@@ -71,22 +71,22 @@ func (ordertree *OrderTree) PriceExist(price decimal.Decimal) bool {
 	return false
 }
 
-func (ordertree *OrderTree) OrderExist(order_id string) bool {
-	if _, ok := ordertree.orderMap[order_id]; ok {
+func (ordertree *OrderTree) OrderExist(orderID string) bool {
+	if _, ok := ordertree.orderMap[orderID]; ok {
 		return true
 	}
 	return false
 }
 
-func (ordertree *OrderTree) RemoveOrderById(order_id string) {
+func (ordertree *OrderTree) RemoveOrderById(orderID string) {
 	ordertree.numOrders = ordertree.numOrders - 1
-	order := ordertree.orderMap[order_id]
+	order := ordertree.orderMap[orderID]
 	ordertree.volume = ordertree.volume.Sub(order.quantity)
 	order.orderList.RemoveOrder(order)
 	if order.orderList.Length() == 0 {
 		ordertree.RemovePrice(order.price)
 	}
-	delete(ordertree.orderMap, order_id)
+	delete(ordertree.orderMap, orderID)
 }
 
 func (ordertree *OrderTree) MaxPrice() decimal.Decimal {

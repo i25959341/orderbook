@@ -1,6 +1,7 @@
 package orderbook
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/shopspring/decimal"
@@ -48,21 +49,21 @@ func (orderBook *OrderBook) WorstAsk() (value decimal.Decimal) {
 
 func (orderBook *OrderBook) ProcessMarketOrder(quote map[string]string, verbose bool) []map[string]string {
 	var trades []map[string]string
-	quantity_to_trade, _ := decimal.NewFromString(quote["quantity"])
+	quantityToTrade, _ := decimal.NewFromString(quote["quantity"])
 	side := quote["side"]
-	var new_trades []map[string]string
+	var newTrades []map[string]string
 
 	if side == "bid" {
-		for quantity_to_trade.GreaterThan(decimal.Zero) && orderBook.asks.Length() > 0 {
-			best_price_asks := orderBook.asks.MinPriceList()
-			quantity_to_trade, new_trades = orderBook.ProcessOrderList("ask", best_price_asks, quantity_to_trade, quote, verbose)
-			trades = append(trades, new_trades...)
+		for quantityToTrade.GreaterThan(decimal.Zero) && orderBook.asks.Length() > 0 {
+			bestPriceAsks := orderBook.asks.MinPriceList()
+			quantityToTrade, newTrades = orderBook.ProcessOrderList("ask", bestPriceAsks, quantityToTrade, quote, verbose)
+			trades = append(trades, newTrades...)
 		}
 	} else if side == "ask" {
-		for quantity_to_trade.GreaterThan(decimal.Zero) && orderBook.bids.Length() > 0 {
-			best_price_bids := orderBook.bids.MaxPriceList()
-			quantity_to_trade, new_trades = orderBook.ProcessOrderList("bid", best_price_bids, quantity_to_trade, quote, verbose)
-			trades = append(trades, new_trades...)
+		for quantityToTrade.GreaterThan(decimal.Zero) && orderBook.bids.Length() > 0 {
+			bestPriceBids := orderBook.bids.MaxPriceList()
+			quantityToTrade, newTrades = orderBook.ProcessOrderList("bid", bestPriceBids, quantityToTrade, quote, verbose)
+			trades = append(trades, newTrades...)
 		}
 	}
 	return trades
@@ -70,63 +71,63 @@ func (orderBook *OrderBook) ProcessMarketOrder(quote map[string]string, verbose 
 
 func (orderBook *OrderBook) ProcessLimitOrder(quote map[string]string, verbose bool) ([]map[string]string, map[string]string) {
 	var trades []map[string]string
-	quantity_to_trade, _ := decimal.NewFromString(quote["quantity"])
+	quantityToTrade, _ := decimal.NewFromString(quote["quantity"])
 	side := quote["side"]
 	price, _ := decimal.NewFromString(quote["price"])
-	var new_trades []map[string]string
+	var newTrades []map[string]string
 
-	var order_in_book map[string]string
+	var orderInBook map[string]string
 
 	if side == "bid" {
 		minPrice := orderBook.asks.MinPrice()
-		for quantity_to_trade.GreaterThan(decimal.Zero) && orderBook.asks.Length() > 0 && price.GreaterThanOrEqual(minPrice) {
-			best_price_asks := orderBook.asks.MinPriceList()
-			quantity_to_trade, new_trades = orderBook.ProcessOrderList("ask", best_price_asks, quantity_to_trade, quote, verbose)
-			trades = append(trades, new_trades...)
+		for quantityToTrade.GreaterThan(decimal.Zero) && orderBook.asks.Length() > 0 && price.GreaterThanOrEqual(minPrice) {
+			bestPriceAsks := orderBook.asks.MinPriceList()
+			quantityToTrade, newTrades = orderBook.ProcessOrderList("ask", bestPriceAsks, quantityToTrade, quote, verbose)
+			trades = append(trades, newTrades...)
 			minPrice = orderBook.asks.MinPrice()
 		}
 
-		if quantity_to_trade.GreaterThan(decimal.Zero) {
+		if quantityToTrade.GreaterThan(decimal.Zero) {
 			quote["order_id"] = strconv.Itoa(orderBook.nextOrderID)
-			quote["quantity"] = quantity_to_trade.String()
+			quote["quantity"] = quantityToTrade.String()
 			orderBook.bids.InsertOrder(quote)
-			order_in_book = quote
+			orderInBook = quote
 		}
 
 	} else if side == "ask" {
 		maxPrice := orderBook.bids.MaxPrice()
-		for quantity_to_trade.GreaterThan(decimal.Zero) && orderBook.bids.Length() > 0 && price.LessThanOrEqual(maxPrice) {
-			best_price_bids := orderBook.bids.MaxPriceList()
-			quantity_to_trade, new_trades = orderBook.ProcessOrderList("bid", best_price_bids, quantity_to_trade, quote, verbose)
-			trades = append(trades, new_trades...)
+		for quantityToTrade.GreaterThan(decimal.Zero) && orderBook.bids.Length() > 0 && price.LessThanOrEqual(maxPrice) {
+			bestPriceBids := orderBook.bids.MaxPriceList()
+			quantityToTrade, newTrades = orderBook.ProcessOrderList("bid", bestPriceBids, quantityToTrade, quote, verbose)
+			trades = append(trades, newTrades...)
 			maxPrice = orderBook.bids.MaxPrice()
 		}
 
-		if quantity_to_trade.GreaterThan(decimal.Zero) {
+		if quantityToTrade.GreaterThan(decimal.Zero) {
 			quote["order_id"] = strconv.Itoa(orderBook.nextOrderID)
-			quote["quantity"] = quantity_to_trade.String()
+			quote["quantity"] = quantityToTrade.String()
 			orderBook.asks.InsertOrder(quote)
-			order_in_book = quote
+			orderInBook = quote
 		}
 	}
-	return trades, order_in_book
+	return trades, orderInBook
 }
 
 func (orderBook *OrderBook) ProcessOrder(quote map[string]string, verbose bool) ([]map[string]string, map[string]string) {
-	order_type := quote["type"]
-	var order_in_book map[string]string
+	orderType := quote["type"]
+	var orderInBook map[string]string
 	var trades []map[string]string
 
 	orderBook.UpdateTime()
 	quote["timestamp"] = strconv.Itoa(orderBook.time)
 	orderBook.nextOrderID++
 
-	if order_type == "market" {
+	if orderType == "market" {
 		trades = orderBook.ProcessMarketOrder(quote, verbose)
 	} else {
-		trades, order_in_book = orderBook.ProcessLimitOrder(quote, verbose)
+		trades, orderInBook = orderBook.ProcessLimitOrder(quote, verbose)
 	}
-	return trades, order_in_book
+	return trades, orderInBook
 }
 
 func (orderBook *OrderBook) ProcessOrderList(side string, orderList *OrderList, quantityStillToTrade decimal.Decimal, quote map[string]string, verbose bool) (decimal.Decimal, []map[string]string) {
@@ -165,9 +166,9 @@ func (orderBook *OrderBook) ProcessOrderList(side string, orderList *OrderList, 
 			}
 		}
 
-		// if verbose {
-		// 	fmt.Println("TRADE: Time - %v, Price - %v, Quantity - %v, TradeID - %v, Matching TradeID - %v", orderBook.time, tradedPrice.String(), tradedQuantity.String(), counterParty, quote["trade_id"])
-		// }
+		if verbose {
+			fmt.Printf("TRADE: Time - %v, Price - %v, Quantity - %v, Matching TradeID - %v\n", orderBook.time, tradedPrice.String(), tradedQuantity.String(), quote["trade_id"])
+		}
 
 		transactionRecord := make(map[string]string)
 		transactionRecord["timestamp"] = strconv.Itoa(orderBook.time)

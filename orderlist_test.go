@@ -26,7 +26,7 @@ func TestNewOrderList(t *testing.T) {
 func TestOrderList(t *testing.T) {
 	orderList := NewOrderList(testPrice)
 
-	var order_list OrderList
+	var emptyList OrderList
 	dummyOrder := make(map[string]string)
 	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
 	dummyOrder["quantity"] = testQuanity.String()
@@ -34,7 +34,7 @@ func TestOrderList(t *testing.T) {
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
 	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
 
-	order := NewOrder(dummyOrder, &order_list)
+	order := NewOrder(dummyOrder, &emptyList)
 
 	orderList.AppendOrder(order)
 
@@ -61,7 +61,7 @@ func TestOrderList(t *testing.T) {
 	dummyOrder1["order_id"] = strconv.Itoa(testOrderId1)
 	dummyOrder1["trade_id"] = strconv.Itoa(testTradeId1)
 
-	order1 := NewOrder(dummyOrder1, &order_list)
+	order1 := NewOrder(dummyOrder1, &emptyList)
 
 	orderList.AppendOrder(order1)
 
