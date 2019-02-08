@@ -12,7 +12,7 @@ import (
 func TestNewOrder(t *testing.T) {
 	var orderList OrderQueue
 	dummyOrder := make(map[string]string)
-	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
+	dummyOrder["timestamp"] = testTimestamp.Format(time.RFC3339Nano)
 	dummyOrder["quantity"] = testQuanity.String()
 	dummyOrder["price"] = testPrice.String()
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
@@ -20,8 +20,8 @@ func TestNewOrder(t *testing.T) {
 
 	order := NewOrderFromMap(dummyOrder, &orderList)
 
-	if !(order.timestamp == testTimestamp) {
-		t.Errorf("Timesmape incorrect, got: %d, want: %d.", order.timestamp, testTimestamp)
+	if !(order.timestamp.Format(time.RFC3339Nano) == testTimestamp.Format(time.RFC3339Nano)) {
+		t.Errorf("Timesmape incorrect, got: %s, want: %s", order.timestamp, testTimestamp)
 	}
 
 	if !(order.quantity.Equal(testQuanity)) {
@@ -35,17 +35,13 @@ func TestNewOrder(t *testing.T) {
 	if !(order.orderID == strconv.Itoa(testOrderId)) {
 		t.Errorf("order id incorrect, got: %s, want: %d.", order.orderID, testOrderId)
 	}
-
-	if !(order.tradeID == strconv.Itoa(testTradeId)) {
-		t.Errorf("trade id incorrect, got: %s, want: %d.", order.tradeID, testTradeId)
-	}
 }
 
 func TestOrder(t *testing.T) {
 	orderList := NewOrderQueue(testPrice)
 
 	dummyOrder := make(map[string]string)
-	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
+	dummyOrder["timestamp"] = testTimestamp.Format(time.RFC3339Nano)
 	dummyOrder["quantity"] = testQuanity.String()
 	dummyOrder["price"] = testPrice.String()
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
@@ -61,9 +57,6 @@ func TestOrder(t *testing.T) {
 		t.Errorf("order id incorrect, got: %s, want: %d.", order.orderID, testOrderId)
 	}
 
-	if !(order.timestamp == testTimestamp1) {
-		t.Errorf("trade id incorrect, got: %s, want: %d.", order.tradeID, testTradeId)
-	}
 }
 
 func BenchmarkOrder(b *testing.B) {
@@ -72,7 +65,7 @@ func BenchmarkOrder(b *testing.B) {
 	stopwatch := time.Now()
 	for i := 0; i < b.N; i++ {
 		order := NewOrderFromMap(map[string]string{
-			"timestamp": strconv.Itoa(i),
+			"timestamp": time.Now().Format(time.RFC3339Nano),
 			"quantity":  testQuanity.String(),
 			"price":     decimal.New(int64(i), 0).String(),
 			"order_id":  strconv.Itoa(i),

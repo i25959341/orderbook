@@ -28,7 +28,7 @@ func TestOrderList(t *testing.T) {
 
 	var emptyList OrderQueue
 	dummyOrder := make(map[string]string)
-	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
+	dummyOrder["timestamp"] = testTimestamp.String()
 	dummyOrder["quantity"] = testQuanity.String()
 	dummyOrder["price"] = testPrice.String()
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
@@ -55,7 +55,7 @@ func TestOrderList(t *testing.T) {
 	}
 
 	dummyOrder1 := make(map[string]string)
-	dummyOrder1["timestamp"] = strconv.Itoa(testTimestamp1)
+	dummyOrder1["timestamp"] = testTimestamp1.String()
 	dummyOrder1["quantity"] = testQuanity1.String()
 	dummyOrder1["price"] = testPrice1.String()
 	dummyOrder1["order_id"] = strconv.Itoa(testOrderId1)

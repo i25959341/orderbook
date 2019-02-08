@@ -43,6 +43,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder["side"] = "ask"
 	dummyOrder["quantity"] = "5"
 	dummyOrder["price"] = "101"
+	dummyOrder["order_id"] = "a"
 	dummyOrder["trade_id"] = "100"
 
 	limitOrders = append(limitOrders, dummyOrder)
@@ -52,6 +53,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder1["side"] = "ask"
 	dummyOrder1["quantity"] = "5"
 	dummyOrder1["price"] = "103"
+	dummyOrder1["order_id"] = "b"
 	dummyOrder1["trade_id"] = "101"
 
 	limitOrders = append(limitOrders, dummyOrder1)
@@ -61,6 +63,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder2["side"] = "ask"
 	dummyOrder2["quantity"] = "5"
 	dummyOrder2["price"] = "101"
+	dummyOrder2["order_id"] = "c"
 	dummyOrder2["trade_id"] = "102"
 
 	limitOrders = append(limitOrders, dummyOrder2)
@@ -70,6 +73,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder7["side"] = "ask"
 	dummyOrder7["quantity"] = "5"
 	dummyOrder7["price"] = "101"
+	dummyOrder7["order_id"] = "d"
 	dummyOrder7["trade_id"] = "103"
 
 	limitOrders = append(limitOrders, dummyOrder7)
@@ -79,6 +83,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder3["side"] = "bid"
 	dummyOrder3["quantity"] = "5"
 	dummyOrder3["price"] = "99"
+	dummyOrder3["order_id"] = "e"
 	dummyOrder3["trade_id"] = "100"
 
 	limitOrders = append(limitOrders, dummyOrder3)
@@ -88,6 +93,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder4["side"] = "bid"
 	dummyOrder4["quantity"] = "5"
 	dummyOrder4["price"] = "98"
+	dummyOrder4["order_id"] = "f"
 	dummyOrder4["trade_id"] = "101"
 
 	limitOrders = append(limitOrders, dummyOrder4)
@@ -97,6 +103,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder5["side"] = "bid"
 	dummyOrder5["quantity"] = "5"
 	dummyOrder5["price"] = "99"
+	dummyOrder5["order_id"] = "g"
 	dummyOrder5["trade_id"] = "102"
 
 	limitOrders = append(limitOrders, dummyOrder5)
@@ -106,6 +113,7 @@ func TestOrderBook(t *testing.T) {
 	dummyOrder6["side"] = "bid"
 	dummyOrder6["quantity"] = "5"
 	dummyOrder6["price"] = "97"
+	dummyOrder6["order_id"] = "h"
 	dummyOrder6["trade_id"] = "103"
 
 	limitOrders = append(limitOrders, dummyOrder6)
@@ -146,6 +154,7 @@ func TestOrderBook(t *testing.T) {
 	marketOrder["side"] = "bid"
 	marketOrder["quantity"] = "2"
 	marketOrder["price"] = "102"
+	marketOrder["order_id"] = "i"
 	marketOrder["trade_id"] = "109"
 
 	trades, order_in_book := orderBook.ProcessOrderFromMap(marketOrder)
@@ -164,6 +173,7 @@ func TestOrderBook(t *testing.T) {
 	bigOrder["side"] = "bid"
 	bigOrder["quantity"] = "50"
 	bigOrder["price"] = "102"
+	bigOrder["order_id"] = "j"
 	bigOrder["trade_id"] = "110"
 
 	trades, order_in_book = orderBook.ProcessOrderFromMap(bigOrder)
@@ -180,6 +190,7 @@ func TestOrderBook(t *testing.T) {
 	marketOrder["type"] = "market"
 	marketOrder["side"] = "ask"
 	marketOrder["quantity"] = "20"
+	marketOrder["order_id"] = "k"
 	marketOrder["trade_id"] = "111"
 
 	trades, order_in_book = orderBook.ProcessOrderFromMap(marketOrder)

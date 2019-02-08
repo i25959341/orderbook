@@ -1,6 +1,8 @@
 package orderbook
 
 import (
+	"time"
+
 	"github.com/emirpasic/gods/examples/redblacktreeextended"
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
 	"github.com/shopspring/decimal"
@@ -139,7 +141,7 @@ func (ot *OrderTree) InsertOrderFromMap(quote map[string]string) {
 	ot.volume = ot.volume.Add(order.quantity)
 }
 
-func (ot *OrderTree) InsertOrder(orderID, tradeID string, quantity, price decimal.Decimal, timestamp int) {
+func (ot *OrderTree) InsertOrder(orderID, tradeID string, quantity, price decimal.Decimal, timestamp time.Time) {
 	if ot.OrderExist(orderID) {
 		ot.RemoveOrder(orderID)
 	}
@@ -150,7 +152,7 @@ func (ot *OrderTree) InsertOrder(orderID, tradeID string, quantity, price decima
 	}
 
 	priceStr := price.String()
-	order := NewOrder(ot.prices[priceStr], orderID, tradeID, quantity, price, timestamp)
+	order := NewOrder(ot.prices[priceStr], orderID, quantity, price, timestamp)
 
 	ot.prices[priceStr].Append(order)
 	ot.orders[order.orderID] = order

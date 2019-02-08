@@ -9,25 +9,25 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var testTimestamp = 123452342343
+var testTimestamp = time.Now().Add(time.Hour)
 var testQuanity, _ = decimal.NewFromString("0.1")
 var testPrice, _ = decimal.NewFromString("0.1")
 var testOrderId = 1
 var testTradeId = 1
 
-var testTimestamp1 = 123452342345
+var testTimestamp1 = time.Now().Add(time.Second)
 var testQuanity1, _ = decimal.NewFromString("0.2")
 var testPrice1, _ = decimal.NewFromString("0.1")
 var testOrderId1 = 2
 var testTradeId1 = 2
 
-var testTimestamp2 = 123452342340
+var testTimestamp2 = time.Now().Add(time.Minute)
 var testQuanity2, _ = decimal.NewFromString("0.2")
 var testPrice2, _ = decimal.NewFromString("0.3")
 var testOrderId2 = 3
 var testTradeId2 = 3
 
-var testTimestamp3 = 1234523
+var testTimestamp3 = time.Now().Add(time.Second)
 var testQuanity3, _ = decimal.NewFromString("200.0")
 var testPrice3, _ = decimal.NewFromString("1.3")
 var testOrderId3 = 3
@@ -37,28 +37,28 @@ func TestNewOrderTree(t *testing.T) {
 	orderTree := NewOrderTree()
 
 	dummyOrder := make(map[string]string)
-	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
+	dummyOrder["timestamp"] = testTimestamp.String()
 	dummyOrder["quantity"] = testQuanity.String()
 	dummyOrder["price"] = testPrice.String()
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
 	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
 
 	dummyOrder1 := make(map[string]string)
-	dummyOrder1["timestamp"] = strconv.Itoa(testTimestamp1)
+	dummyOrder1["timestamp"] = testTimestamp1.String()
 	dummyOrder1["quantity"] = testQuanity1.String()
 	dummyOrder1["price"] = testPrice1.String()
 	dummyOrder1["order_id"] = strconv.Itoa(testOrderId1)
 	dummyOrder1["trade_id"] = strconv.Itoa(testTradeId1)
 
 	dummyOrder2 := make(map[string]string)
-	dummyOrder2["timestamp"] = strconv.Itoa(testTimestamp2)
+	dummyOrder2["timestamp"] = testTimestamp2.String()
 	dummyOrder2["quantity"] = testQuanity2.String()
 	dummyOrder2["price"] = testPrice2.String()
 	dummyOrder2["order_id"] = strconv.Itoa(testOrderId2)
 	dummyOrder2["trade_id"] = strconv.Itoa(testTradeId2)
 
 	dummyOrder3 := make(map[string]string)
-	dummyOrder3["timestamp"] = strconv.Itoa(testTimestamp3)
+	dummyOrder3["timestamp"] = testTimestamp3.String()
 	dummyOrder3["quantity"] = testQuanity3.String()
 	dummyOrder3["price"] = testPrice3.String()
 	dummyOrder3["order_id"] = strconv.Itoa(testOrderId3)

@@ -4,22 +4,18 @@ import (
 	"strconv"
 
 	"github.com/shopspring/decimal"
-	lane "gopkg.in/oleiade/lane.v1"
 )
 
 type OrderBook struct {
-	deque       *lane.Deque
-	bids        *OrderTree
-	asks        *OrderTree
-	time        int
-	nextOrderID int
+	bids *OrderTree
+	asks *OrderTree
+	time int
 }
 
 func NewOrderBook() *OrderBook {
 	return &OrderBook{
-		deque: lane.NewDeque(),
-		bids:  NewOrderTree(),
-		asks:  NewOrderTree(),
+		bids: NewOrderTree(),
+		asks: NewOrderTree(),
 	}
 }
 
@@ -52,13 +48,33 @@ func (ob *OrderBook) ProcessMarketOrderFromMap(quote map[string]string) []map[st
 	if side == "bid" {
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.asks.Length() > 0 {
 			bestPriceAsks := ob.asks.MinPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderList("ask", bestPriceAsks, quantityToTrade)
+			quantityToTrade, newTrades = ob.ProcessOrderQueue("ask", bestPriceAsks, quantityToTrade)
 			trades = append(trades, newTrades...)
 		}
 	} else if side == "ask" {
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.bids.Length() > 0 {
 			bestPriceBids := ob.bids.MaxPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderList("bid", bestPriceBids, quantityToTrade)
+			quantityToTrade, newTrades = ob.ProcessOrderQueue("bid", bestPriceBids, quantityToTrade)
+			trades = append(trades, newTrades...)
+		}
+	}
+	return trades
+}
+
+func (ob *OrderBook) ProcessMarketOrder(side string, quantity decimal.Decimal) []map[string]string {
+	var trades []map[string]string
+	var newTrades []map[string]string
+
+	if side == "bid" {
+		for quantity.GreaterThan(decimal.Zero) && ob.asks.Length() > 0 {
+			bestPriceAsks := ob.asks.MinPriceQueue()
+			quantity, newTrades = ob.ProcessOrderQueue("ask", bestPriceAsks, quantity)
+			trades = append(trades, newTrades...)
+		}
+	} else if side == "ask" {
+		for quantity.GreaterThan(decimal.Zero) && ob.bids.Length() > 0 {
+			bestPriceBids := ob.bids.MaxPriceQueue()
+			quantity, newTrades = ob.ProcessOrderQueue("bid", bestPriceBids, quantity)
 			trades = append(trades, newTrades...)
 		}
 	}
@@ -78,13 +94,12 @@ func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string) ([]map[st
 		minPrice := ob.asks.MinPrice()
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.asks.Length() > 0 && price.GreaterThanOrEqual(minPrice) {
 			bestPriceAsks := ob.asks.MinPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderList("ask", bestPriceAsks, quantityToTrade)
+			quantityToTrade, newTrades = ob.ProcessOrderQueue("ask", bestPriceAsks, quantityToTrade)
 			trades = append(trades, newTrades...)
 			minPrice = ob.asks.MinPrice()
 		}
 
 		if quantityToTrade.GreaterThan(decimal.Zero) {
-			quote["order_id"] = strconv.Itoa(ob.nextOrderID)
 			quote["quantity"] = quantityToTrade.String()
 			ob.bids.InsertOrderFromMap(quote)
 			orderInBook = quote
@@ -94,19 +109,51 @@ func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string) ([]map[st
 		maxPrice := ob.bids.MaxPrice()
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.bids.Length() > 0 && price.LessThanOrEqual(maxPrice) {
 			bestPriceBids := ob.bids.MaxPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderList("bid", bestPriceBids, quantityToTrade)
+			quantityToTrade, newTrades = ob.ProcessOrderQueue("bid", bestPriceBids, quantityToTrade)
 			trades = append(trades, newTrades...)
 			maxPrice = ob.bids.MaxPrice()
 		}
 
 		if quantityToTrade.GreaterThan(decimal.Zero) {
-			quote["order_id"] = strconv.Itoa(ob.nextOrderID)
 			quote["quantity"] = quantityToTrade.String()
 			ob.asks.InsertOrderFromMap(quote)
 			orderInBook = quote
 		}
 	}
 	return trades, orderInBook
+}
+
+func (ob *OrderBook) ProcessLimitOrder(side string, quantity, price decimal.Decimal) []map[string]string {
+	var trades []map[string]string
+	var newTrades []map[string]string
+
+	if side == "bid" {
+		minPrice := ob.asks.MinPrice()
+		for quantity.GreaterThan(decimal.Zero) && ob.asks.Length() > 0 && price.GreaterThanOrEqual(minPrice) {
+			bestPriceAsks := ob.asks.MinPriceQueue()
+			quantity, newTrades = ob.ProcessOrderQueue("ask", bestPriceAsks, quantity)
+			trades = append(trades, newTrades...)
+			minPrice = ob.asks.MinPrice()
+		}
+
+		if quantity.GreaterThan(decimal.Zero) {
+			//ob.bids.InsertOrder()
+		}
+
+	} else if side == "ask" {
+		maxPrice := ob.bids.MaxPrice()
+		for quantity.GreaterThan(decimal.Zero) && ob.bids.Length() > 0 && price.LessThanOrEqual(maxPrice) {
+			bestPriceBids := ob.bids.MaxPriceQueue()
+			quantity, newTrades = ob.ProcessOrderQueue("bid", bestPriceBids, quantity)
+			trades = append(trades, newTrades...)
+			maxPrice = ob.bids.MaxPrice()
+		}
+
+		if quantity.GreaterThan(decimal.Zero) {
+			//ob.asks.InsertOrder()
+		}
+	}
+	return trades
 }
 
 func (ob *OrderBook) ProcessOrderFromMap(quote map[string]string) ([]map[string]string, map[string]string) {
@@ -116,7 +163,6 @@ func (ob *OrderBook) ProcessOrderFromMap(quote map[string]string) ([]map[string]
 
 	ob.UpdateTime()
 	quote["timestamp"] = strconv.Itoa(ob.time)
-	ob.nextOrderID++
 
 	if orderType == "market" {
 		trades = ob.ProcessMarketOrderFromMap(quote)
@@ -126,12 +172,12 @@ func (ob *OrderBook) ProcessOrderFromMap(quote map[string]string) ([]map[string]
 	return trades, orderInBook
 }
 
-func (ob *OrderBook) ProcessOrderList(side string, orderList *OrderQueue, quantityStillToTrade decimal.Decimal) (decimal.Decimal, []map[string]string) {
+func (ob *OrderBook) ProcessOrderQueue(side string, orderQueue *OrderQueue, quantityStillToTrade decimal.Decimal) (decimal.Decimal, []map[string]string) {
 	quantityToTrade := quantityStillToTrade
 	var trades []map[string]string
 
-	for orderList.Length() > 0 && quantityToTrade.GreaterThan(decimal.Zero) {
-		headOrder := orderList.Head()
+	for orderQueue.Length() > 0 && quantityToTrade.GreaterThan(decimal.Zero) {
+		headOrder := orderQueue.Head()
 		tradedPrice := headOrder.price
 		var (
 			newBookQuantity decimal.Decimal
@@ -169,7 +215,6 @@ func (ob *OrderBook) ProcessOrderList(side string, orderList *OrderQueue, quanti
 		transactionRecord["quantity"] = tradedQuantity.String()
 		transactionRecord["time"] = strconv.Itoa(ob.time)
 
-		ob.deque.Append(transactionRecord)
 		trades = append(trades, transactionRecord)
 	}
 	return quantityToTrade, trades
