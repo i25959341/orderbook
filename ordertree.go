@@ -3,8 +3,8 @@ package orderbook
 import (
 	"strconv"
 
+	"github.com/emirpasic/gods/examples/redblacktreeextended"
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
-	"github.com/overlord/go-version/redblacktreeextended"
 	"github.com/shopspring/decimal"
 )
 
