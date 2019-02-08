@@ -111,7 +111,7 @@ func TestOrderBook(t *testing.T) {
 	limitOrders = append(limitOrders, dummyOrder6)
 
 	for _, order := range limitOrders {
-		orderBook.ProcessOrderFromMap(order, true)
+		orderBook.ProcessOrderFromMap(order)
 	}
 
 	value, _ := decimal.NewFromString("101")
@@ -148,7 +148,7 @@ func TestOrderBook(t *testing.T) {
 	marketOrder["price"] = "102"
 	marketOrder["trade_id"] = "109"
 
-	trades, order_in_book := orderBook.ProcessOrderFromMap(marketOrder, true)
+	trades, order_in_book := orderBook.ProcessOrderFromMap(marketOrder)
 
 	tradedPrice := trades[0]["price"]
 	tradedQuantity := trades[0]["quantity"]
@@ -166,7 +166,7 @@ func TestOrderBook(t *testing.T) {
 	bigOrder["price"] = "102"
 	bigOrder["trade_id"] = "110"
 
-	trades, order_in_book = orderBook.ProcessOrderFromMap(bigOrder, true)
+	trades, order_in_book = orderBook.ProcessOrderFromMap(bigOrder)
 
 	fmt.Println(trades)
 	fmt.Println(order_in_book)
@@ -182,7 +182,7 @@ func TestOrderBook(t *testing.T) {
 	marketOrder["quantity"] = "20"
 	marketOrder["trade_id"] = "111"
 
-	trades, order_in_book = orderBook.ProcessOrderFromMap(marketOrder, true)
+	trades, order_in_book = orderBook.ProcessOrderFromMap(marketOrder)
 
 }
 

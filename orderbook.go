@@ -1,7 +1,6 @@
 package orderbook
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/shopspring/decimal"
@@ -44,7 +43,7 @@ func (ob *OrderBook) WorstAsk() decimal.Decimal {
 	return ob.asks.MaxPrice()
 }
 
-func (ob *OrderBook) ProcessMarketOrderFromMap(quote map[string]string, verbose bool) []map[string]string {
+func (ob *OrderBook) ProcessMarketOrderFromMap(quote map[string]string) []map[string]string {
 	var trades []map[string]string
 	quantityToTrade, _ := decimal.NewFromString(quote["quantity"])
 	side := quote["side"]
@@ -53,20 +52,20 @@ func (ob *OrderBook) ProcessMarketOrderFromMap(quote map[string]string, verbose 
 	if side == "bid" {
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.asks.Length() > 0 {
 			bestPriceAsks := ob.asks.MinPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderListFromMap("ask", bestPriceAsks, quantityToTrade, quote, verbose)
+			quantityToTrade, newTrades = ob.ProcessOrderList("ask", bestPriceAsks, quantityToTrade)
 			trades = append(trades, newTrades...)
 		}
 	} else if side == "ask" {
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.bids.Length() > 0 {
 			bestPriceBids := ob.bids.MaxPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderListFromMap("bid", bestPriceBids, quantityToTrade, quote, verbose)
+			quantityToTrade, newTrades = ob.ProcessOrderList("bid", bestPriceBids, quantityToTrade)
 			trades = append(trades, newTrades...)
 		}
 	}
 	return trades
 }
 
-func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string, verbose bool) ([]map[string]string, map[string]string) {
+func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string) ([]map[string]string, map[string]string) {
 	var trades []map[string]string
 	quantityToTrade, _ := decimal.NewFromString(quote["quantity"])
 	side := quote["side"]
@@ -79,7 +78,7 @@ func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string, verbose b
 		minPrice := ob.asks.MinPrice()
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.asks.Length() > 0 && price.GreaterThanOrEqual(minPrice) {
 			bestPriceAsks := ob.asks.MinPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderListFromMap("ask", bestPriceAsks, quantityToTrade, quote, verbose)
+			quantityToTrade, newTrades = ob.ProcessOrderList("ask", bestPriceAsks, quantityToTrade)
 			trades = append(trades, newTrades...)
 			minPrice = ob.asks.MinPrice()
 		}
@@ -95,7 +94,7 @@ func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string, verbose b
 		maxPrice := ob.bids.MaxPrice()
 		for quantityToTrade.GreaterThan(decimal.Zero) && ob.bids.Length() > 0 && price.LessThanOrEqual(maxPrice) {
 			bestPriceBids := ob.bids.MaxPriceQueue()
-			quantityToTrade, newTrades = ob.ProcessOrderListFromMap("bid", bestPriceBids, quantityToTrade, quote, verbose)
+			quantityToTrade, newTrades = ob.ProcessOrderList("bid", bestPriceBids, quantityToTrade)
 			trades = append(trades, newTrades...)
 			maxPrice = ob.bids.MaxPrice()
 		}
@@ -110,7 +109,7 @@ func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string, verbose b
 	return trades, orderInBook
 }
 
-func (ob *OrderBook) ProcessOrderFromMap(quote map[string]string, verbose bool) ([]map[string]string, map[string]string) {
+func (ob *OrderBook) ProcessOrderFromMap(quote map[string]string) ([]map[string]string, map[string]string) {
 	orderType := quote["type"]
 	var orderInBook map[string]string
 	var trades []map[string]string
@@ -120,14 +119,14 @@ func (ob *OrderBook) ProcessOrderFromMap(quote map[string]string, verbose bool) 
 	ob.nextOrderID++
 
 	if orderType == "market" {
-		trades = ob.ProcessMarketOrderFromMap(quote, verbose)
+		trades = ob.ProcessMarketOrderFromMap(quote)
 	} else {
-		trades, orderInBook = ob.ProcessLimitOrderFromMap(quote, verbose)
+		trades, orderInBook = ob.ProcessLimitOrderFromMap(quote)
 	}
 	return trades, orderInBook
 }
 
-func (ob *OrderBook) ProcessOrderListFromMap(side string, orderList *OrderQueue, quantityStillToTrade decimal.Decimal, quote map[string]string, verbose bool) (decimal.Decimal, []map[string]string) {
+func (ob *OrderBook) ProcessOrderList(side string, orderList *OrderQueue, quantityStillToTrade decimal.Decimal) (decimal.Decimal, []map[string]string) {
 	quantityToTrade := quantityStillToTrade
 	var trades []map[string]string
 
@@ -162,10 +161,6 @@ func (ob *OrderBook) ProcessOrderListFromMap(side string, orderList *OrderQueue,
 			} else {
 				ob.asks.RemoveOrder(headOrder.orderID)
 			}
-		}
-
-		if verbose {
-			fmt.Printf("TRADE: Time - %v, Price - %v, Quantity - %v, Matching TradeID - %v\n", ob.time, tradedPrice.String(), tradedQuantity.String(), quote["trade_id"])
 		}
 
 		transactionRecord := make(map[string]string)
