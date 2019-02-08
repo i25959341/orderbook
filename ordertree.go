@@ -147,7 +147,7 @@ func (ordertree *OrderTree) InsertOrder(quote map[string]string) {
 		ordertree.CreatePrice(price)
 	}
 
-	order := NewOrder(quote, ordertree.priceMap[price.String()])
+	order := NewOrderFromMap(quote, ordertree.priceMap[price.String()])
 	ordertree.priceMap[price.String()].AppendOrder(order)
 	ordertree.orderMap[order.orderID] = order
 	ordertree.volume = ordertree.volume.Add(order.quantity)
@@ -169,7 +169,7 @@ func (ordertree *OrderTree) UpdateOrder(quote map[string]string) {
 	} else {
 		quantity, _ := decimal.NewFromString(quote["quantity"])
 		timestamp, _ := strconv.Atoi(quote["timestamp"])
-		order.UpdateQuantity(quantity, timestamp)
+		order.Update(quantity, timestamp)
 	}
 	ordertree.volume = ordertree.volume.Add(order.quantity.Sub(originalQuantity))
 }

@@ -185,3 +185,7 @@ func TestOrderBook(t *testing.T) {
 	trades, order_in_book = orderBook.ProcessOrder(marketOrder, true)
 
 }
+
+func TestOrderBookOutput(t *testing.T) {
+	//orderBook := NewOrderBook()
+}

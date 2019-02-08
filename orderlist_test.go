@@ -34,7 +34,7 @@ func TestOrderList(t *testing.T) {
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
 	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
 
-	order := NewOrder(dummyOrder, &emptyList)
+	order := NewOrderFromMap(dummyOrder, &emptyList)
 
 	orderList.AppendOrder(order)
 
@@ -61,7 +61,7 @@ func TestOrderList(t *testing.T) {
 	dummyOrder1["order_id"] = strconv.Itoa(testOrderId1)
 	dummyOrder1["trade_id"] = strconv.Itoa(testTradeId1)
 
-	order1 := NewOrder(dummyOrder1, &emptyList)
+	order1 := NewOrderFromMap(dummyOrder1, &emptyList)
 
 	orderList.AppendOrder(order1)
 
@@ -78,9 +78,9 @@ func TestOrderList(t *testing.T) {
 		t.Errorf("headorder id incorrect, got: %s, want: %d.", headOrder.orderID, 0)
 	}
 
-	nextOrder := headOrder.NextOrder()
+	nextOrder := headOrder.Next()
 
 	if !(nextOrder.orderID == "2") {
-		t.Errorf("Next headorder id incorrect, got: %s, want: %d.", headOrder.NextOrder().orderID, 2)
+		t.Errorf("Next headorder id incorrect, got: %s, want: %d.", headOrder.Next().orderID, 2)
 	}
 }

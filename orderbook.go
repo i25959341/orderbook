@@ -145,7 +145,7 @@ func (orderBook *OrderBook) ProcessOrderList(side string, orderList *OrderList, 
 			tradedQuantity = quantityToTrade
 			// Do the transaction
 			newBookQuantity = headOrder.quantity.Sub(quantityToTrade)
-			headOrder.UpdateQuantity(newBookQuantity, headOrder.timestamp)
+			headOrder.Update(newBookQuantity, headOrder.timestamp)
 			quantityToTrade = decimal.Zero
 
 		} else if quantityToTrade.Equal(headOrder.quantity) {
@@ -230,4 +230,10 @@ func (orderBook *OrderBook) VolumeAtPrice(side string, price decimal.Decimal) de
 		}
 		return volume
 	}
+}
+
+func (o *OrderBook) String() string {
+	//pl := o.bids.PriceList()
+
+	return ""
 }

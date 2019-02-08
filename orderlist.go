@@ -37,14 +37,14 @@ func (orderlist *OrderList) HeadOrder() *Order {
 
 func (orderlist *OrderList) AppendOrder(order *Order) {
 	if orderlist.Length() == 0 {
-		order.nextOrder = nil
-		order.prevOrder = nil
+		order.next = nil
+		order.prev = nil
 		orderlist.headOrder = order
 		orderlist.tailOrder = order
 	} else {
-		order.prevOrder = orderlist.tailOrder
-		order.nextOrder = nil
-		orderlist.tailOrder.nextOrder = order
+		order.prev = orderlist.tailOrder
+		order.next = nil
+		orderlist.tailOrder.next = order
 		orderlist.tailOrder = order
 	}
 	orderlist.length = orderlist.length + 1
@@ -58,30 +58,30 @@ func (orderlist *OrderList) RemoveOrder(order *Order) {
 		return
 	}
 
-	nextOrder := order.nextOrder
-	prevOrder := order.prevOrder
+	nextOrder := order.next
+	prevOrder := order.prev
 
 	if nextOrder != nil && prevOrder != nil {
-		nextOrder.prevOrder = prevOrder
-		prevOrder.nextOrder = nextOrder
+		nextOrder.prev = prevOrder
+		prevOrder.next = nextOrder
 	} else if nextOrder != nil {
-		nextOrder.prevOrder = nil
+		nextOrder.prev = nil
 		orderlist.headOrder = nextOrder
 	} else if prevOrder != nil {
-		prevOrder.nextOrder = nil
+		prevOrder.next = nil
 		orderlist.tailOrder = prevOrder
 	}
 }
 
 func (orderlist *OrderList) MoveToTail(order *Order) {
-	if order.prevOrder != nil { // This Order is not the first Order in the OrderList
-		order.prevOrder.nextOrder = order.nextOrder // Link the previous Order to the next Order, then move the Order to tail
+	if order.prev != nil { // This Order is not the first Order in the OrderList
+		order.prev.next = order.next // Link the previous Order to the next Order, then move the Order to tail
 	} else { // This Order is the first Order in the OrderList
-		orderlist.headOrder = order.nextOrder // Make next order the first
+		orderlist.headOrder = order.next // Make next order the first
 	}
-	order.nextOrder.prevOrder = order.prevOrder
+	order.next.prev = order.prev
 
 	// Move Order to the last position. Link up the previous last position Order.
-	orderlist.tailOrder.nextOrder = order
+	orderlist.tailOrder.next = order
 	orderlist.tailOrder = order
 }

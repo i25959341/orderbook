@@ -1,8 +1,12 @@
 package orderbook
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
+	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 func TestNewOrder(t *testing.T) {
@@ -14,7 +18,7 @@ func TestNewOrder(t *testing.T) {
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
 	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
 
-	order := NewOrder(dummyOrder, &orderList)
+	order := NewOrderFromMap(dummyOrder, &orderList)
 
 	if !(order.timestamp == testTimestamp) {
 		t.Errorf("Timesmape incorrect, got: %d, want: %d.", order.timestamp, testTimestamp)
@@ -47,11 +51,11 @@ func TestOrder(t *testing.T) {
 	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
 	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
 
-	order := NewOrder(dummyOrder, orderList)
+	order := NewOrderFromMap(dummyOrder, orderList)
 
 	orderList.AppendOrder(order)
 
-	order.UpdateQuantity(testQuanity1, testTimestamp1)
+	order.Update(testQuanity1, testTimestamp1)
 
 	if !(order.quantity.Equal(testQuanity1)) {
 		t.Errorf("order id incorrect, got: %s, want: %d.", order.orderID, testOrderId)
@@ -60,4 +64,22 @@ func TestOrder(t *testing.T) {
 	if !(order.timestamp == testTimestamp1) {
 		t.Errorf("trade id incorrect, got: %s, want: %d.", order.tradeID, testTradeId)
 	}
+}
+
+func BenchmarkOrder(b *testing.B) {
+	orderList := NewOrderList(testPrice)
+
+	stopwatch := time.Now()
+	for i := 0; i < b.N; i++ {
+		order := NewOrderFromMap(map[string]string{
+			"timestamp": strconv.Itoa(i),
+			"quantity":  testQuanity.String(),
+			"price":     decimal.New(int64(i), 0).String(),
+			"order_id":  strconv.Itoa(i),
+			"trade_id":  strconv.Itoa(i),
+		}, orderList)
+		orderList.AppendOrder(order)
+	}
+	elapsed := time.Since(stopwatch)
+	fmt.Printf("\n\nElapsed: %s\nTransactions per second: %f\n", elapsed, float64(b.N)/elapsed.Seconds())
 }

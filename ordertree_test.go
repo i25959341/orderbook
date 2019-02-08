@@ -1,8 +1,10 @@
 package orderbook
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -112,4 +114,22 @@ func TestNewOrderTree(t *testing.T) {
 	}
 
 	// TODO Check PriceList as well and verify with the orders
+}
+
+func BenchmarkOrderTree(b *testing.B) {
+	orderTree := NewOrderTree()
+
+	stopwatch := time.Now()
+	for i := 0; i < b.N; i++ {
+		order := map[string]string{
+			"timestamp": strconv.Itoa(i),
+			"quantity":  testQuanity.String(),
+			"price":     decimal.New(int64(i), 0).String(),
+			"order_id":  strconv.Itoa(i),
+			"trade_id":  strconv.Itoa(i),
+		}
+		orderTree.InsertOrder(order)
+	}
+	elapsed := time.Since(stopwatch)
+	fmt.Printf("\n\nElapsed: %s\nTransactions per second: %f\n", elapsed, float64(b.N)/elapsed.Seconds())
 }
