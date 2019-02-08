@@ -33,7 +33,7 @@ type OrderTree struct {
 }
 
 func NewOrderTree() *OrderTree {
-	priceTree := &redblacktreeextended.RedBlackTreeExtended{rbt.NewWith(decimalComparator)}
+	priceTree := &redblacktreeextended.RedBlackTreeExtended{Tree: rbt.NewWith(decimalComparator)}
 	priceMap := make(map[string]*OrderList)
 	orderMap := make(map[string]*Order)
 	return &OrderTree{priceTree, priceMap, orderMap, decimal.Zero, 0, 0}
