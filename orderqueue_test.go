@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewOrderList(t *testing.T) {
-	orderList := NewOrderList(testPrice)
+	orderList := NewOrderQueue(testPrice)
 
 	if !(orderList.length == 0) {
 		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
@@ -24,9 +24,9 @@ func TestNewOrderList(t *testing.T) {
 }
 
 func TestOrderList(t *testing.T) {
-	orderList := NewOrderList(testPrice)
+	orderList := NewOrderQueue(testPrice)
 
-	var emptyList OrderList
+	var emptyList OrderQueue
 	dummyOrder := make(map[string]string)
 	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
 	dummyOrder["quantity"] = testQuanity.String()
@@ -36,7 +36,7 @@ func TestOrderList(t *testing.T) {
 
 	order := NewOrderFromMap(dummyOrder, &emptyList)
 
-	orderList.AppendOrder(order)
+	orderList.Append(order)
 
 	if !(orderList.Length() == 1) {
 		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
@@ -63,7 +63,7 @@ func TestOrderList(t *testing.T) {
 
 	order1 := NewOrderFromMap(dummyOrder1, &emptyList)
 
-	orderList.AppendOrder(order1)
+	orderList.Append(order1)
 
 	if !(orderList.Length() == 2) {
 		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
@@ -73,7 +73,7 @@ func TestOrderList(t *testing.T) {
 		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
 	}
 
-	headOrder := orderList.HeadOrder()
+	headOrder := orderList.Head()
 	if !(headOrder.orderID == "1") {
 		t.Errorf("headorder id incorrect, got: %s, want: %d.", headOrder.orderID, 0)
 	}

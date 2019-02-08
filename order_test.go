@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewOrder(t *testing.T) {
-	var orderList OrderList
+	var orderList OrderQueue
 	dummyOrder := make(map[string]string)
 	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
 	dummyOrder["quantity"] = testQuanity.String()
@@ -42,7 +42,7 @@ func TestNewOrder(t *testing.T) {
 }
 
 func TestOrder(t *testing.T) {
-	orderList := NewOrderList(testPrice)
+	orderList := NewOrderQueue(testPrice)
 
 	dummyOrder := make(map[string]string)
 	dummyOrder["timestamp"] = strconv.Itoa(testTimestamp)
@@ -53,7 +53,7 @@ func TestOrder(t *testing.T) {
 
 	order := NewOrderFromMap(dummyOrder, orderList)
 
-	orderList.AppendOrder(order)
+	orderList.Append(order)
 
 	order.Update(testQuanity1, testTimestamp1)
 
@@ -67,7 +67,7 @@ func TestOrder(t *testing.T) {
 }
 
 func BenchmarkOrder(b *testing.B) {
-	orderList := NewOrderList(testPrice)
+	orderList := NewOrderQueue(testPrice)
 
 	stopwatch := time.Now()
 	for i := 0; i < b.N; i++ {
@@ -78,7 +78,7 @@ func BenchmarkOrder(b *testing.B) {
 			"order_id":  strconv.Itoa(i),
 			"trade_id":  strconv.Itoa(i),
 		}, orderList)
-		orderList.AppendOrder(order)
+		orderList.Append(order)
 	}
 	elapsed := time.Since(stopwatch)
 	fmt.Printf("\n\nElapsed: %s\nTransactions per second: %f\n", elapsed, float64(b.N)/elapsed.Seconds())

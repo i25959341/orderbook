@@ -72,8 +72,8 @@ func TestNewOrderTree(t *testing.T) {
 		t.Errorf("orderTree.Length() incorrect, got: %d, want: %d.", orderTree.Length(), 0)
 	}
 
-	orderTree.InsertOrder(dummyOrder)
-	orderTree.InsertOrder(dummyOrder1)
+	orderTree.InsertOrderFromMap(dummyOrder)
+	orderTree.InsertOrderFromMap(dummyOrder1)
 
 	if !(orderTree.PriceExist(testPrice)) {
 		t.Errorf("orderTree.numOrders incorrect, got: %d, want: %d.", orderTree.numOrders, 2)
@@ -87,17 +87,17 @@ func TestNewOrderTree(t *testing.T) {
 		t.Errorf("orderTree.numOrders incorrect, got: %d, want: %d.", orderTree.numOrders, 2)
 	}
 
-	orderTree.RemoveOrderById(dummyOrder1["order_id"])
-	orderTree.RemoveOrderById(dummyOrder["order_id"])
+	orderTree.RemoveOrder(dummyOrder1["order_id"])
+	orderTree.RemoveOrder(dummyOrder["order_id"])
 
 	if !(orderTree.Length() == 0) {
 		t.Errorf("orderTree.numOrders incorrect, got: %d, want: %d.", orderTree.numOrders, 2)
 	}
 
-	orderTree.InsertOrder(dummyOrder)
-	orderTree.InsertOrder(dummyOrder1)
-	orderTree.InsertOrder(dummyOrder2)
-	orderTree.InsertOrder(dummyOrder3)
+	orderTree.InsertOrderFromMap(dummyOrder)
+	orderTree.InsertOrderFromMap(dummyOrder1)
+	orderTree.InsertOrderFromMap(dummyOrder2)
+	orderTree.InsertOrderFromMap(dummyOrder3)
 
 	if !(orderTree.MaxPrice().Equal(testPrice3)) {
 		t.Errorf("orderTree.MaxPrice incorrect, got: %d, want: %d.", orderTree.MaxPrice(), testPrice3)
@@ -128,7 +128,7 @@ func BenchmarkOrderTree(b *testing.B) {
 			"order_id":  strconv.Itoa(i),
 			"trade_id":  strconv.Itoa(i),
 		}
-		orderTree.InsertOrder(order)
+		orderTree.InsertOrderFromMap(order)
 	}
 	elapsed := time.Since(stopwatch)
 	fmt.Printf("\n\nElapsed: %s\nTransactions per second: %f\n", elapsed, float64(b.N)/elapsed.Seconds())

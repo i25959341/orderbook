@@ -13,30 +13,28 @@ type Order struct {
 	orderID   string
 	tradeID   string
 
-	orderList *OrderList
+	orderList *OrderQueue
 	next      *Order
 	prev      *Order
 }
 
-func NewOrderFromMap(quote map[string]string, orderList *OrderList) *Order {
+func NewOrderFromMap(quote map[string]string, orderQueue *OrderQueue) *Order {
 	timestamp, _ := strconv.Atoi(quote["timestamp"])
 	quantity, _ := decimal.NewFromString(quote["quantity"])
 	price, _ := decimal.NewFromString(quote["price"])
 	orderID := quote["order_id"]
 	tradeID := quote["trade_id"]
-	return NewOrder(orderList, orderID, tradeID, quantity, price, timestamp)
+	return NewOrder(orderQueue, orderID, tradeID, quantity, price, timestamp)
 }
 
-func NewOrder(orderList *OrderList, orderID, tradeID string, quantity, price decimal.Decimal, timestamp int) *Order {
+func NewOrder(orderQueue *OrderQueue, orderID, tradeID string, quantity, price decimal.Decimal, timestamp int) *Order {
 	return &Order{
 		timestamp: timestamp,
 		orderID:   orderID,
 		tradeID:   tradeID,
 		quantity:  quantity,
 		price:     price,
-		orderList: orderList,
-		next:      nil,
-		prev:      nil,
+		orderList: orderQueue,
 	}
 }
 
@@ -49,7 +47,7 @@ func (o *Order) Prev() *Order {
 }
 
 func (o *Order) Update(quantity decimal.Decimal, timestamp int) {
-	if quantity.GreaterThan(o.quantity) && o.orderList.tailOrder != o {
+	if quantity.GreaterThan(o.quantity) && o.orderList.tail != o {
 		o.orderList.MoveToTail(o)
 	}
 	o.orderList.volume = o.orderList.volume.Sub(o.quantity.Sub(quantity))
