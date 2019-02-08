@@ -33,7 +33,7 @@ func TestNewOrderBook(t *testing.T) {
 	}
 }
 
-func TestOrderBook(t *testing.T) {
+func TestOrderBookMap(t *testing.T) {
 	orderBook := NewOrderBook()
 
 	fmt.Println(orderBook.BestAsk())
@@ -122,6 +122,8 @@ func TestOrderBook(t *testing.T) {
 		orderBook.ProcessOrderFromMap(order)
 	}
 
+	t.Log(orderBook.String())
+
 	value, _ := decimal.NewFromString("101")
 	if !(orderBook.BestAsk().Equal(value)) {
 		t.Errorf("orderBook.BestAsk incorrect, got: %d, want: %d.", orderBook.BestAsk(), value)
@@ -197,6 +199,20 @@ func TestOrderBook(t *testing.T) {
 
 }
 
-func TestOrderBookOutput(t *testing.T) {
-	//orderBook := NewOrderBook()
+func TestOrderBook(t *testing.T) {
+	ob := NewOrderBook()
+
+	for i := 101; i < 110; i++ {
+		ob.ProcessLimitOrder("ask", fmt.Sprintf("sell-%d", i), decimal.New(1, 0), decimal.New(int64(i), 0))
+	}
+
+	for i := 100; i > 90; i-- {
+		ob.ProcessLimitOrder("bid", fmt.Sprintf("buy-%d", i), decimal.New(1, 0), decimal.New(int64(i), 0))
+	}
+
+	t.Log(ob.ProcessLimitOrder("bid", "buy-man100", decimal.New(12, 0), decimal.New(100, 0)))
+	t.Log(ob.ProcessLimitOrder("bid", "buy-man110", decimal.New(1, 0), decimal.New(110, 0)))
+	t.Log(ob.ProcessLimitOrder("ask", "sell-man10", decimal.New(2, 0), decimal.New(10, 0)))
+	t.Log(ob.ProcessMarketOrder("ask", decimal.New(2, 0)))
+	t.Log(ob)
 }

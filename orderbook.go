@@ -1,7 +1,10 @@
 package orderbook
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -123,7 +126,7 @@ func (ob *OrderBook) ProcessLimitOrderFromMap(quote map[string]string) ([]map[st
 	return trades, orderInBook
 }
 
-func (ob *OrderBook) ProcessLimitOrder(side string, quantity, price decimal.Decimal) []map[string]string {
+func (ob *OrderBook) ProcessLimitOrder(side, orderID string, quantity, price decimal.Decimal) []map[string]string {
 	var trades []map[string]string
 	var newTrades []map[string]string
 
@@ -137,7 +140,7 @@ func (ob *OrderBook) ProcessLimitOrder(side string, quantity, price decimal.Deci
 		}
 
 		if quantity.GreaterThan(decimal.Zero) {
-			//ob.bids.InsertOrder()
+			ob.bids.InsertOrder(orderID, quantity, price, time.Now().UTC())
 		}
 
 	} else if side == "ask" {
@@ -150,7 +153,7 @@ func (ob *OrderBook) ProcessLimitOrder(side string, quantity, price decimal.Deci
 		}
 
 		if quantity.GreaterThan(decimal.Zero) {
-			//ob.asks.InsertOrder()
+			ob.asks.InsertOrder(orderID, quantity, price, time.Now().UTC())
 		}
 	}
 	return trades
@@ -210,6 +213,7 @@ func (ob *OrderBook) ProcessOrderQueue(side string, orderQueue *OrderQueue, quan
 		}
 
 		transactionRecord := make(map[string]string)
+		transactionRecord["order_id"] = headOrder.orderID
 		transactionRecord["timestamp"] = strconv.Itoa(ob.time)
 		transactionRecord["price"] = tradedPrice.String()
 		transactionRecord["quantity"] = tradedQuantity.String()
@@ -251,5 +255,18 @@ func (ob *OrderBook) VolumeAtPrice(side string, price decimal.Decimal) decimal.D
 }
 
 func (ob *OrderBook) String() string {
-	panic("not implemented")
+	sb := strings.Builder{}
+
+	for k, v := range ob.asks.prices {
+		sb.WriteString(fmt.Sprintf("\n%s -> %s", k, v.volume))
+	}
+
+	sb.WriteString("\n ASKS ----------------------------------------")
+	sb.WriteString("\n BIDS ----------------------------------------")
+
+	for k, v := range ob.bids.prices {
+		sb.WriteString(fmt.Sprintf("\n%s -> %s", k, v.volume))
+	}
+
+	return sb.String()
 }

@@ -141,7 +141,7 @@ func (ot *OrderTree) InsertOrderFromMap(quote map[string]string) {
 	ot.volume = ot.volume.Add(order.quantity)
 }
 
-func (ot *OrderTree) InsertOrder(orderID, tradeID string, quantity, price decimal.Decimal, timestamp time.Time) {
+func (ot *OrderTree) InsertOrder(orderID string, quantity, price decimal.Decimal, timestamp time.Time) {
 	if ot.OrderExist(orderID) {
 		ot.RemoveOrder(orderID)
 	}
