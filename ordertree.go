@@ -1,26 +1,10 @@
 package orderbook
 
 import (
-	"strconv"
-
 	"github.com/emirpasic/gods/examples/redblacktreeextended"
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
 	"github.com/shopspring/decimal"
 )
-
-func decimalComparator(a, b interface{}) int {
-	aAsserted, ok := a.(decimal.Decimal)
-	if !ok {
-		panic("'a' is not Decimal")
-	}
-
-	bAsserted, ok := b.(decimal.Decimal)
-	if !ok {
-		panic("'b' is not Decimal")
-	}
-
-	return aAsserted.Cmp(bAsserted)
-}
 
 type OrderTree struct {
 	priceTree *redblacktreeextended.RedBlackTreeExtended
@@ -171,43 +155,4 @@ func (ot *OrderTree) InsertOrder(orderID, tradeID string, quantity, price decima
 	ot.prices[priceStr].Append(order)
 	ot.orders[order.orderID] = order
 	ot.volume = ot.volume.Add(order.quantity)
-}
-
-func (ot *OrderTree) UpdateOrderFromMap(quote map[string]string) {
-	order := ot.orders[quote["order_id"]]
-	originalQuantity := order.quantity
-	price, _ := decimal.NewFromString(quote["price"])
-
-	if !price.Equal(order.price) {
-		// Price changed. Remove order and update tree.
-		orderList := ot.prices[order.price.String()]
-		orderList.Remove(order)
-		if orderList.Length() == 0 {
-			ot.RemovePrice(price)
-		}
-		ot.InsertOrderFromMap(quote)
-	} else {
-		quantity, _ := decimal.NewFromString(quote["quantity"])
-		timestamp, _ := strconv.Atoi(quote["timestamp"])
-		order.Update(quantity, timestamp)
-	}
-	ot.volume = ot.volume.Add(order.quantity.Sub(originalQuantity))
-}
-
-func (ot *OrderTree) UpdateOrder(orderID, tradeID string, quantity, price decimal.Decimal, timestamp int) {
-	order := ot.orders[orderID]
-	originalQuantity := order.quantity
-
-	if !price.Equal(order.price) {
-		// Price changed. Remove order and update tree.
-		orderList := ot.prices[order.price.String()]
-		orderList.Remove(order)
-		if orderList.Length() == 0 {
-			ot.RemovePrice(price)
-		}
-		ot.InsertOrder(orderID, tradeID, quantity, price, timestamp)
-	} else {
-		order.Update(quantity, timestamp)
-	}
-	ot.volume = ot.volume.Add(order.quantity.Sub(originalQuantity))
 }
