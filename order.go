@@ -15,7 +15,8 @@ type Order struct {
 	quantity  decimal.Decimal
 	price     decimal.Decimal
 
-	owner *list.Element
+	container *list.Element
+	owner     *list.List
 }
 
 // NewOrder creates new constant object Order

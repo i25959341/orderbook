@@ -65,24 +65,22 @@ func (oq *OrderQueue) Append(order *Order) error {
 	if element == nil {
 		return ErrInvalidOrder
 	}
-	order.owner = element
-	oq.volume = oq.volume.Add(order.quantity)
 
+	order.container = element
+	order.owner = oq.orders
+	oq.volume = oq.volume.Add(order.quantity)
 	return nil
 }
 
 // Remove removes order from the queue and link order chain
 func (oq *OrderQueue) Remove(order *Order) error {
-	if order.owner == nil {
-		return ErrOrderNotExists
-	}
-
-	result := oq.orders.Remove(order.owner)
-	if result == nil {
+	if order.owner == nil || order.container == nil || order.owner.Remove(order.container) == nil {
 		return ErrOrderNotExists
 	}
 
 	order.owner = nil
+	order.container = nil
+
 	oq.volume = oq.volume.Sub(order.quantity)
 	return nil
 }
