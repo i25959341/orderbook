@@ -1,86 +1,161 @@
 package orderbook
 
 import (
-	"strconv"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
 
-func TestNewOrderList(t *testing.T) {
-	orderList := NewOrderQueue(testPrice)
-
-	if !(orderList.length == 0) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
-	}
-
-	if !(orderList.price.Equal(testPrice)) {
-		t.Errorf("Orderlist price incorrect, got: %d, want: %d.", orderList.length, 0)
-	}
-
-	if !(orderList.volume.Equal(decimal.Zero)) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
-	}
+func TestNewOrderQueue(t *testing.T) {
+	t.Log(NewOrderQueue(decimal.New(100, 0)))
 }
 
-func TestOrderList(t *testing.T) {
-	orderList := NewOrderQueue(testPrice)
+func TestOrderAppendRemove(t *testing.T) {
+	price := decimal.New(100, 0)
+	volume := decimal.New(10, 0)
+	length := 10
 
-	var emptyList OrderQueue
-	dummyOrder := make(map[string]string)
-	dummyOrder["timestamp"] = testTimestamp.String()
-	dummyOrder["quantity"] = testQuanity.String()
-	dummyOrder["price"] = testPrice.String()
-	dummyOrder["order_id"] = strconv.Itoa(testOrderId)
-	dummyOrder["trade_id"] = strconv.Itoa(testTradeId)
+	oq := NewOrderQueue(price)
+	orders := make([]*Order, length)
+	for i := 0; i < length; i++ {
+		orders[i] = NewOrder(fmt.Sprintf("order-%d", i), volume, price, time.Now().UTC())
+		if err := oq.Append(orders[i]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Log(oq)
 
-	order := NewOrderFromMap(dummyOrder, &emptyList)
-
-	orderList.Append(order)
-
-	if !(orderList.Length() == 1) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
+	if oq.Head() != orders[0] {
+		t.Fatal("invalid head order")
 	}
 
-	if !(orderList.price.Equal(testPrice)) {
-		t.Errorf("Orderlist price incorrect, got: %d, want: %d.", orderList.length, 0)
+	if oq.Length() != length {
+		t.Fatalf("wrong length: got %d, want %d", oq.Length(), length)
 	}
 
-	if !(orderList.volume.Equal(order.quantity)) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
+	if !oq.Volume().Equal(volume.Mul(decimal.New(int64(length), 0))) {
+		t.Fatalf("wrong length: got %s, want %s", oq.Volume(), volume.Mul(decimal.New(int64(length), 0)))
 	}
 
-	if !(orderList.volume.Equal(order.quantity)) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
+	if err := NewOrderQueue(price).Append(orders[1]); err == nil {
+		t.Fatal("it is possible to append already linked order")
 	}
 
-	dummyOrder1 := make(map[string]string)
-	dummyOrder1["timestamp"] = testTimestamp1.String()
-	dummyOrder1["quantity"] = testQuanity1.String()
-	dummyOrder1["price"] = testPrice1.String()
-	dummyOrder1["order_id"] = strconv.Itoa(testOrderId1)
-	dummyOrder1["trade_id"] = strconv.Itoa(testTradeId1)
-
-	order1 := NewOrderFromMap(dummyOrder1, &emptyList)
-
-	orderList.Append(order1)
-
-	if !(orderList.Length() == 2) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
+	if err := oq.Append(NewOrder("fakeOrder", decimal.Zero, price, time.Now().UTC())); err == nil {
+		t.Fatal("it is possible to append zero volume order")
 	}
 
-	if !(orderList.volume.Equal(order.quantity.Add(order1.quantity))) {
-		t.Errorf("Orderlist Length incorrect, got: %d, want: %d.", orderList.length, 0)
+	if err := oq.Append(NewOrder("fakeOrder", decimal.New(10, 0), decimal.Zero, time.Now().UTC())); err == nil {
+		t.Fatal("it is possible to append zero price order")
 	}
 
-	headOrder := orderList.Head()
-	if !(headOrder.orderID == "1") {
-		t.Errorf("headorder id incorrect, got: %s, want: %d.", headOrder.orderID, 0)
+	if err := oq.Append(NewOrder("fakeOrder", decimal.New(10, 0), price.Add(decimal.New(10, 0)), time.Now().UTC())); err == nil {
+		t.Fatal("it is possible to append different price order")
 	}
 
-	nextOrder := headOrder.Next()
-
-	if !(nextOrder.orderID == "2") {
-		t.Errorf("Next headorder id incorrect, got: %s, want: %d.", headOrder.Next().orderID, 2)
+	if err := oq.Remove(NewOrder("fakeOrder", decimal.New(10, 0), decimal.Zero, time.Now().UTC())); err == nil {
+		t.Fatal("it is possible to remove invalid order")
 	}
+
+	if err := oq.Remove(orders[2]); err != nil {
+		t.Fatal(err)
+	}
+	if orders[1].next != orders[3] || orders[3].prev != orders[1] {
+		t.Fatal("invalid order chain")
+	}
+
+	t.Log(oq)
+
+	if err := oq.Remove(orders[0]); err != nil {
+		t.Fatal(err)
+	}
+
+	if oq.Head() != orders[1] {
+		t.Fatalf("invalid head: got %v, want %v", oq.Head(), orders[1])
+	}
+	t.Log(oq)
+
+	if err := oq.Remove(orders[length-1]); err != nil {
+		t.Fatal(err)
+	}
+
+	if oq.Tail() != orders[length-2] {
+		t.Fatalf("invalid tail: got %v, want %v", oq.Tail(), orders[length-2])
+	}
+	t.Log(oq)
+
+	if err := oq.MoveToTail(oq.Head()); err != nil {
+		t.Fatal(err)
+	}
+
+	if oq.Head() != orders[3] {
+		t.Fatalf("invalid head: got %v, want %v", oq.Head(), orders[3])
+	}
+
+	t.Log(oq)
+}
+
+func TestOrderMoveToTail(t *testing.T) {
+	price := decimal.New(100, 0)
+	volume := decimal.New(10, 0)
+	length := 2
+
+	oq := NewOrderQueue(price)
+	orders := make([]*Order, length)
+	for i := 0; i < length; i++ {
+		orders[i] = NewOrder(fmt.Sprintf("order-%d", i), volume, price, time.Now().UTC())
+		if err := oq.Append(orders[i]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Log(oq)
+
+	if err := oq.MoveToTail(NewOrder("fakeOrder", decimal.New(10, 0), decimal.Zero, time.Now().UTC())); err == nil {
+		t.Fatal("it is possible to move order from another queue")
+	}
+
+	oq.MoveToTail(orders[0])
+	if oq.Head() != orders[1] || oq.Tail() != orders[0] {
+		t.Fatal("invalid order head or tail")
+	}
+
+	if orders[1].Prev() != nil || oq.Tail().Next() != nil {
+		t.Fatal("invalid order connection")
+	}
+	t.Log(oq)
+
+	orders = append(orders, NewOrder("Order-2", volume, price, time.Now().UTC()))
+	oq.Append(orders[2])
+	t.Log(oq)
+
+	oq.MoveToTail(orders[0])
+	if oq.Head() != orders[1] || oq.Tail() != orders[0] {
+		t.Fatal("invalid order connection")
+	}
+	t.Log(oq)
+
+	oq.MoveToTail(orders[0])
+
+	oq.Remove(orders[0])
+	t.Log(oq)
+
+	oq.Remove(orders[1])
+	t.Log(oq)
+
+	oq.Remove(orders[2])
+	t.Log(oq)
+}
+
+func BenchmarkOrderQueue(b *testing.B) {
+	price := decimal.New(100, 0)
+	orderQueue := NewOrderQueue(price)
+	stopwatch := time.Now()
+	for i := 0; i < b.N; i++ {
+		order := NewOrder(fmt.Sprintf("order-%d", i), decimal.New(100, 0), decimal.New(int64(i), 0), time.Now().UTC())
+		orderQueue.Append(order)
+	}
+	elapsed := time.Since(stopwatch)
+	fmt.Printf("\n\nElapsed: %s\nTransactions per second: %f\n", elapsed, float64(b.N)/elapsed.Seconds())
 }
