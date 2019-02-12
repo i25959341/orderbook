@@ -26,9 +26,9 @@ func main() {
 
     for i := 50; i < 100; i = i + 10 {
 		orderBook.ProcessLimitOrder(ob.Buy, fmt.Sprintf("b-%d", i), decimal.New(2, 0), decimal.New(int64(i), 0))
-	}
+    }
 
-	for i := 100; i < 150; i = i + 10 {
+    for i := 100; i < 150; i = i + 10 {
 		orderBook.ProcessLimitOrder(ob.Sell, fmt.Sprintf("s-%d", i), decimal.New(2, 0), decimal.New(int64(i), 0))
     }
     fmt.Println(orderBook)
@@ -40,3 +40,5 @@ func main() {
     fmt.Println("Partial:", partialDone)
 }
 ```
+
+### TODO: Make tests, update help
