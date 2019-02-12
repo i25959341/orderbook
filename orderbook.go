@@ -24,6 +24,32 @@ func NewOrderbook() *Orderbook {
 	}
 }
 
+// ProcessMarketOrder gets definite orders quantitiy from orderbook
+func (ob *Orderbook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal, err error) {
+	if quantity.Sign() <= 0 {
+		return nil, nil, decimal.Zero, ErrInvalidQuantity
+	}
+
+	if side == Buy {
+		for quantity.Sign() > 0 && ob.asks.Len() > 0 {
+			bestPriceAsks := ob.asks.MinPriceQueue()
+			ordersDone, partialDone, quantityLeft := ob.processQueue(bestPriceAsks, quantity)
+			done = append(done, ordersDone...)
+			partial = partialDone
+			quantity = quantityLeft
+		}
+	} else {
+		for quantity.Sign() > 0 && ob.bids.Len() > 0 {
+			bestPriceBids := ob.bids.MaxPriceQueue()
+			ordersDone, partialDone, quantityLeft := ob.processQueue(bestPriceBids, quantity)
+			done = append(done, ordersDone...)
+			partial = partialDone
+			quantity = quantityLeft
+		}
+	}
+	return
+}
+
 // ProcessLimitOrder places limit order to the orderbook
 func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, err error) {
 	if _, ok := ob.orders[orderID]; ok {
