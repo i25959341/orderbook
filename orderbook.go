@@ -40,7 +40,7 @@ func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 
 	if side == Buy {
 		minPrice := ob.asks.MinPriceQueue()
-		for quantity.GreaterThan(decimal.Zero) && ob.asks.Len() > 0 && price.GreaterThanOrEqual(minPrice.Price()) {
+		for quantity.Sign() > 0 && ob.asks.Len() > 0 && price.GreaterThanOrEqual(minPrice.Price()) {
 			ordersDone, partialDone, quantityLeft := ob.processQueue(minPrice, quantity)
 			done = append(done, ordersDone...)
 			partial = partialDone
@@ -49,7 +49,7 @@ func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 		}
 
 		o := NewOrder(orderID, side, quantity, price, time.Now().UTC())
-		if quantity.GreaterThan(decimal.Zero) {
+		if quantity.Sign() > 0 {
 			partial = o
 			ob.orders[orderID] = ob.bids.Append(o)
 		} else {
@@ -57,7 +57,7 @@ func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 		}
 	} else {
 		maxPrice := ob.bids.MaxPriceQueue()
-		for quantity.GreaterThan(decimal.Zero) && ob.bids.Len() > 0 && price.LessThanOrEqual(maxPrice.Price()) {
+		for quantity.Sign() > 0 && ob.bids.Len() > 0 && price.LessThanOrEqual(maxPrice.Price()) {
 			ordersDone, partialDone, quantityLeft := ob.processQueue(maxPrice, quantity)
 			done = append(done, ordersDone...)
 			partial = partialDone
@@ -66,21 +66,20 @@ func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 		}
 
 		o := NewOrder(orderID, side, quantity, price, time.Now().UTC())
-		if quantity.GreaterThan(decimal.Zero) {
+		if quantity.Sign() > 0 {
 			partial = o
 			ob.orders[orderID] = ob.asks.Append(o)
 		} else {
 			done = append(done, o)
 		}
 	}
-
 	return
 }
 
 func (ob *Orderbook) processQueue(orderQueue *OrderQueue, quantityToTrade decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal) {
 	quantityLeft = quantityToTrade
 
-	for orderQueue.Len() > 0 && quantityLeft.GreaterThan(decimal.Zero) {
+	for orderQueue.Len() > 0 && quantityLeft.Sign() > 0 {
 		headOrderEl := orderQueue.Head()
 		headOrder := headOrderEl.Value.(*Order)
 
