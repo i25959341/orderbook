@@ -40,48 +40,40 @@ func (oq *OrderQueue) Volume() decimal.Decimal {
 }
 
 // Head returns top order in queue
-func (oq *OrderQueue) Head() *Order {
-	return oq.orders.Front().Value.(*Order)
+func (oq *OrderQueue) Head() *list.Element {
+	return oq.orders.Front()
 }
 
 // Tail returns bottom order in queue
-func (oq *OrderQueue) Tail() *Order {
-	return oq.orders.Back().Value.(*Order)
+func (oq *OrderQueue) Tail() *list.Element {
+	return oq.orders.Back()
 }
 
 // Append adds order to tail of the queue
-func (oq *OrderQueue) Append(order *Order) error {
-	if order.owner != nil {
-		return ErrAlreadyLinked
+func (oq *OrderQueue) Append(o *Order) *list.Element {
+	e := oq.orders.PushBack(o)
+	if e != nil {
+		oq.volume = oq.volume.Add(o.Quantity())
+		return e
 	}
-	if order.quantity.LessThanOrEqual(decimal.Zero) {
-		return ErrInvalidQuantity
-	}
-	if order.price.LessThanOrEqual(decimal.Zero) || !order.price.Equal(oq.price) {
-		return ErrInvalidPrice
-	}
-
-	element := oq.orders.PushBack(order)
-	if element == nil {
-		return ErrInvalidOrder
-	}
-
-	order.container = element
-	order.owner = oq.orders
-	oq.volume = oq.volume.Add(order.quantity)
 	return nil
 }
 
+// Update sets up new order to list value
+func (oq *OrderQueue) Update(e *list.Element, o *Order) *list.Element {
+	oq.volume = oq.volume.Sub(e.Value.(*Order).Quantity())
+	oq.volume = oq.volume.Add(o.Quantity())
+	e.Value = o
+	return e
+}
+
 // Remove removes order from the queue and link order chain
-func (oq *OrderQueue) Remove(order *Order) error {
-	if order.owner == nil || order.container == nil || order.owner.Remove(order.container) == nil {
-		return ErrOrderNotExists
+func (oq *OrderQueue) Remove(e *list.Element) *Order {
+	o := oq.orders.Remove(e)
+	if o != nil {
+		oq.volume = oq.volume.Sub(o.(*Order).Quantity())
+		return o.(*Order)
 	}
-
-	order.owner = nil
-	order.container = nil
-
-	oq.volume = oq.volume.Sub(order.quantity)
 	return nil
 }
 

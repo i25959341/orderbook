@@ -1,24 +1,24 @@
 package orderbook
 
 import (
+	"container/list"
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/emirpasic/gods/examples/redblacktreeextended"
+	rbtx "github.com/emirpasic/gods/examples/redblacktreeextended"
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
 	"github.com/shopspring/decimal"
 )
 
 // OrderTree implements facade to operations with order queue
 type OrderTree struct {
-	priceTree *redblacktreeextended.RedBlackTreeExtended
-	prices    map[string]*OrderQueue // Dictionary containing price : OrderList object
-	orders    map[string]*Order      // Dictionary containing order_id : Order object
-	volume    decimal.Decimal        // Contains total quantity from all Orders in tree
-	numOrders int                    // Contains count of Orders in tree
-	depth     int                    // Number of different prices in tree (http://en.wikipedia.org/wiki/Order_book_(trading)#Book_depth)
+	priceTree *rbtx.RedBlackTreeExtended
+	prices    map[string]*OrderQueue
+
+	numOrders int
+	depth     int
 }
 
 // NewOrderTree creates new OrderTree manager
@@ -30,105 +30,90 @@ func NewOrderTree() *OrderTree {
 			}),
 		},
 		prices: map[string]*OrderQueue{},
-		orders: map[string]*Order{},
-		volume: decimal.Zero,
 	}
 }
 
-// Length returns total amount of orders in tree
-func (ot *OrderTree) Length() int {
-	return len(ot.orders)
+// Len returns amount of orders
+func (ot *OrderTree) Len() int {
+	return ot.numOrders
 }
 
-// CreateOrder creates new order and inserts it to the tree
-func (ot *OrderTree) CreateOrder(orderID string, quantity, price decimal.Decimal, timestamp time.Time) error {
-	if _, ok := ot.orders[orderID]; ok {
-		return ErrOrderExists
-	}
-	if quantity.LessThanOrEqual(decimal.Zero) {
-		return ErrInvalidQuantity
-	}
-	if price.LessThanOrEqual(decimal.Zero) {
-		return ErrInvalidPrice
-	}
-
-	priceQueue := ot.getOrCreatePrice(price)
-	order := NewOrder(orderID, quantity, price, timestamp)
-
-	priceQueue.Append(order)
-	ot.orders[orderID] = order
-	ot.volume = ot.volume.Add(order.quantity)
-	ot.numOrders++
-	return nil
+// Depth returns depth of market
+func (ot *OrderTree) Depth() int {
+	return ot.depth
 }
 
-// RemoveOrder removes definite order by ID from tree
-func (ot *OrderTree) RemoveOrder(orderID string) error {
-	order, ok := ot.orders[orderID]
+// Append appends order to definite price level
+func (ot *OrderTree) Append(o *Order) *list.Element {
+	price := o.Price()
+	strPrice := price.String()
+
+	priceQueue, ok := ot.prices[strPrice]
 	if !ok {
-		return ErrOrderNotExists
+		priceQueue = NewOrderQueue(o.Price())
 	}
 
-	priceStr := order.price.String()
+	e := priceQueue.Append(o)
+	if e != nil {
+		if !ok {
+			ot.prices[strPrice] = priceQueue
+			ot.priceTree.Put(price, priceQueue)
+			ot.depth++
+		}
 
-	priceQueue := ot.prices[priceStr]
-	priceQueue.Remove(order)
-
-	if priceQueue.Len() == 0 {
-		ot.depth--
-		ot.priceTree.Remove(order.price)
-		delete(ot.prices, priceStr)
+		ot.numOrders++
 	}
 
-	delete(ot.orders, orderID)
-	ot.volume = ot.volume.Sub(order.quantity)
-	ot.numOrders--
-	return nil
+	return e
+}
+
+// Remove removes order from definite price level
+func (ot *OrderTree) Remove(e *list.Element) *Order {
+	price := e.Value.(*Order).Price()
+	strPrice := price.String()
+
+	priceQueue, ok := ot.prices[strPrice]
+	if !ok {
+		return nil
+	}
+
+	o := priceQueue.Remove(e)
+	if o != nil {
+		if priceQueue.Len() == 0 {
+			delete(ot.prices, strPrice)
+			ot.priceTree.Remove(price)
+			ot.depth--
+		}
+
+		ot.numOrders--
+	}
+
+	return o
 }
 
 // MaxPrice returns maximal level of price
-func (ot *OrderTree) MaxPrice() decimal.Decimal {
+func (ot *OrderTree) MaxPriceQueue() *OrderQueue {
 	if ot.depth > 0 {
-		value, found := ot.priceTree.GetMax()
-		if found {
-			return value.(*OrderQueue).price
+		if value, found := ot.priceTree.GetMax(); found {
+			return value.(*OrderQueue)
 		}
-		return decimal.Zero
-	} else {
-		return decimal.Zero
 	}
+	return nil
 }
 
 // MaxPrice returns minimal level of price
-func (ot *OrderTree) MinPrice() decimal.Decimal {
+func (ot *OrderTree) MinPriceQueue() *OrderQueue {
 	if ot.depth > 0 {
-		value, found := ot.priceTree.GetMin()
-		if found {
-			return value.(*OrderQueue).price
-		} else {
-			return decimal.Zero
+		if value, found := ot.priceTree.GetMin(); found {
+			return value.(*OrderQueue)
 		}
-	} else {
-		return decimal.Zero
 	}
-}
-
-func (ot *OrderTree) getOrCreatePrice(price decimal.Decimal) *OrderQueue {
-	priceStr := price.String()
-
-	if queue, ok := ot.prices[priceStr]; ok {
-		return queue
-	}
-
-	ot.depth++
-	newQueue := NewOrderQueue(price)
-	ot.priceTree.Put(price, newQueue)
-	ot.prices[priceStr] = newQueue
-	return newQueue
+	return nil
 }
 
 func (ot *OrderTree) String() string {
 	sb := strings.Builder{}
+
 	prices := []decimal.Decimal{}
 	for k, _ := range ot.prices {
 		num, _ := decimal.NewFromString(k)
@@ -136,23 +121,26 @@ func (ot *OrderTree) String() string {
 	}
 
 	sort.Slice(prices, func(i, j int) bool {
-		return prices[i].LessThan(prices[j])
+		return prices[i].GreaterThan(prices[j])
 	})
 
-	pricesStr := []string{}
+	var (
+		strPrices   []string
+		maxLen      int
+		strPrice    string
+		strPriceLen int
+	)
 	for _, price := range prices {
-		pricesStr = append(pricesStr, price.String())
-	}
-
-	maxLen := 0
-	for _, price := range pricesStr {
-		if len(price) > maxLen {
-			maxLen = len(price)
+		strPrice = price.String()
+		strPriceLen = len(strPrice)
+		if strPriceLen > maxLen {
+			maxLen = strPriceLen
 		}
+		strPrices = append(strPrices, price.String())
 	}
 
-	for _, price := range pricesStr {
-		sb.WriteString(fmt.Sprintf("\n%s -> %s", strings.Repeat(" ", maxLen-len(price))+price, ot.prices[price].volume))
+	for _, price := range strPrices {
+		sb.WriteString(fmt.Sprintf("\n%s -> %s", strings.Repeat(" ", maxLen-len(price))+price, ot.prices[price].Volume()))
 	}
 
 	return sb.String()

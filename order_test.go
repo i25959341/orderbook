@@ -8,5 +8,5 @@ import (
 )
 
 func TestNewOrder(t *testing.T) {
-	t.Log(NewOrder("order1", decimal.New(100, 0), decimal.New(100, 0), time.Now().UTC()))
+	t.Log(NewOrder("order-1", Sell, decimal.New(100, 0), decimal.New(100, 0), time.Now().UTC()))
 }
