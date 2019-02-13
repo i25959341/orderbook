@@ -11,8 +11,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// OrderTree implements facade to operations with order queue
-type OrderTree struct {
+// OrderSide implements facade to operations with order queue
+type OrderSide struct {
 	priceTree *rbtx.RedBlackTreeExtended
 	prices    map[string]*OrderQueue
 
@@ -20,9 +20,9 @@ type OrderTree struct {
 	depth     int
 }
 
-// NewOrderTree creates new OrderTree manager
-func NewOrderTree() *OrderTree {
-	return &OrderTree{
+// NewOrderSide creates new OrderSide manager
+func NewOrderSide() *OrderSide {
+	return &OrderSide{
 		priceTree: &rbtx.RedBlackTreeExtended{
 			Tree: rbt.NewWith(func(a, b interface{}) int {
 				return a.(decimal.Decimal).Cmp(b.(decimal.Decimal))
@@ -33,17 +33,17 @@ func NewOrderTree() *OrderTree {
 }
 
 // Len returns amount of orders
-func (ot *OrderTree) Len() int {
+func (ot *OrderSide) Len() int {
 	return ot.numOrders
 }
 
 // Depth returns depth of market
-func (ot *OrderTree) Depth() int {
+func (ot *OrderSide) Depth() int {
 	return ot.depth
 }
 
 // Append appends order to definite price level
-func (ot *OrderTree) Append(o *Order) *list.Element {
+func (ot *OrderSide) Append(o *Order) *list.Element {
 	price := o.Price()
 	strPrice := price.String()
 
@@ -59,7 +59,7 @@ func (ot *OrderTree) Append(o *Order) *list.Element {
 }
 
 // Remove removes order from definite price level
-func (ot *OrderTree) Remove(e *list.Element) *Order {
+func (ot *OrderSide) Remove(e *list.Element) *Order {
 	price := e.Value.(*Order).Price()
 	strPrice := price.String()
 
@@ -77,7 +77,7 @@ func (ot *OrderTree) Remove(e *list.Element) *Order {
 }
 
 // MaxPriceQueue returns maximal level of price
-func (ot *OrderTree) MaxPriceQueue() *OrderQueue {
+func (ot *OrderSide) MaxPriceQueue() *OrderQueue {
 	if ot.depth > 0 {
 		if value, found := ot.priceTree.GetMax(); found {
 			return value.(*OrderQueue)
@@ -87,7 +87,7 @@ func (ot *OrderTree) MaxPriceQueue() *OrderQueue {
 }
 
 // MinPriceQueue returns maximal level of price
-func (ot *OrderTree) MinPriceQueue() *OrderQueue {
+func (ot *OrderSide) MinPriceQueue() *OrderQueue {
 	if ot.depth > 0 {
 		if value, found := ot.priceTree.GetMin(); found {
 			return value.(*OrderQueue)
@@ -96,7 +96,7 @@ func (ot *OrderTree) MinPriceQueue() *OrderQueue {
 	return nil
 }
 
-func (ot *OrderTree) String() string {
+func (ot *OrderSide) String() string {
 	sb := strings.Builder{}
 
 	prices := []decimal.Decimal{}

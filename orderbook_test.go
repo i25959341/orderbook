@@ -168,7 +168,6 @@ func TestMarketProcess(t *testing.T) {
 
 func BenchmarkLimitOrder(b *testing.B) {
 	ob := NewOrderBook()
-
 	stopwatch := time.Now()
 	for i := 0; i < b.N; i++ {
 		addDepth(ob, "05-", decimal.New(10, 0))                                           // 10 ts

@@ -8,8 +8,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func TestOrderTree(t *testing.T) {
-	ot := NewOrderTree()
+func TestOrderSide(t *testing.T) {
+	ot := NewOrderSide()
 
 	o1 := NewOrder(
 		"order-1",
@@ -65,8 +65,8 @@ func TestOrderTree(t *testing.T) {
 	t.Log(ot)
 }
 
-func BenchmarkOrderTree(b *testing.B) {
-	ot := NewOrderTree()
+func BenchmarkOrderSide(b *testing.B) {
+	ot := NewOrderSide()
 	stopwatch := time.Now()
 
 	var o *Order

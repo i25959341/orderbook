@@ -11,16 +11,16 @@ import (
 type OrderBook struct {
 	orders map[string]*list.Element // orderID -> *Order (*list.Element.Value.(*Order))
 
-	asks *OrderTree
-	bids *OrderTree
+	asks *OrderSide
+	bids *OrderSide
 }
 
 // NewOrderBook creates Orderbook object
 func NewOrderBook() *OrderBook {
 	return &OrderBook{
 		orders: map[string]*list.Element{},
-		bids:   NewOrderTree(),
-		asks:   NewOrderTree(),
+		bids:   NewOrderSide(),
+		asks:   NewOrderSide(),
 	}
 }
 
@@ -67,7 +67,7 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 	}
 
 	quantityToTrade := quantity
-	var sideToAdd *OrderTree
+	var sideToAdd *OrderSide
 	if side == Buy {
 		sideToAdd = ob.bids
 		minPrice := ob.asks.MinPriceQueue()
