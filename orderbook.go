@@ -64,40 +64,38 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 		return nil, nil, ErrInvalidPrice
 	}
 
+	quantityToTrade := quantity
+	var sideToAdd *OrderTree
 	if side == Buy {
+		sideToAdd = ob.bids
 		minPrice := ob.asks.MinPriceQueue()
-		for quantity.Sign() > 0 && ob.asks.Len() > 0 && price.GreaterThanOrEqual(minPrice.Price()) {
-			ordersDone, partialDone, quantityLeft := ob.processQueue(minPrice, quantity)
+		for quantityToTrade.Sign() > 0 && ob.asks.Len() > 0 && price.GreaterThanOrEqual(minPrice.Price()) {
+			ordersDone, partialDone, quantityLeft := ob.processQueue(minPrice, quantityToTrade)
 			done = append(done, ordersDone...)
 			partial = partialDone
-			quantity = quantityLeft
+			quantityToTrade = quantityLeft
 			minPrice = ob.asks.MinPriceQueue()
 		}
-
-		o := NewOrder(orderID, side, quantity, price, time.Now().UTC())
-		if quantity.Sign() > 0 {
-			partial = o
-			ob.orders[orderID] = ob.bids.Append(o)
-		} else {
-			done = append(done, o)
-		}
 	} else {
+		sideToAdd = ob.asks
 		maxPrice := ob.bids.MaxPriceQueue()
-		for quantity.Sign() > 0 && ob.bids.Len() > 0 && price.LessThanOrEqual(maxPrice.Price()) {
-			ordersDone, partialDone, quantityLeft := ob.processQueue(maxPrice, quantity)
+		for quantityToTrade.Sign() > 0 && ob.bids.Len() > 0 && price.LessThanOrEqual(maxPrice.Price()) {
+			ordersDone, partialDone, quantityLeft := ob.processQueue(maxPrice, quantityToTrade)
 			done = append(done, ordersDone...)
 			partial = partialDone
-			quantity = quantityLeft
+			quantityToTrade = quantityLeft
 			maxPrice = ob.bids.MaxPriceQueue()
 		}
+	}
 
-		o := NewOrder(orderID, side, quantity, price, time.Now().UTC())
-		if quantity.Sign() > 0 {
+	if quantityToTrade.Sign() > 0 {
+		o := NewOrder(orderID, side, quantityToTrade, price, time.Now().UTC())
+		if len(done) > 0 {
 			partial = o
-			ob.orders[orderID] = ob.asks.Append(o)
-		} else {
-			done = append(done, o)
 		}
+		ob.orders[orderID] = sideToAdd.Append(o)
+	} else {
+		done = append(done, NewOrder(orderID, side, quantity, price, time.Now().UTC()))
 	}
 	return
 }

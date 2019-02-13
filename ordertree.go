@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emirpasic/gods/examples/redblacktreeextended"
 	rbtx "github.com/emirpasic/gods/examples/redblacktreeextended"
 	rbt "github.com/emirpasic/gods/trees/redblacktree"
 	"github.com/shopspring/decimal"
@@ -24,7 +23,7 @@ type OrderTree struct {
 // NewOrderTree creates new OrderTree manager
 func NewOrderTree() *OrderTree {
 	return &OrderTree{
-		priceTree: &redblacktreeextended.RedBlackTreeExtended{
+		priceTree: &rbtx.RedBlackTreeExtended{
 			Tree: rbt.NewWith(func(a, b interface{}) int {
 				return a.(decimal.Decimal).Cmp(b.(decimal.Decimal))
 			}),
