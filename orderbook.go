@@ -24,7 +24,18 @@ func NewOrderBook() *OrderBook {
 	}
 }
 
-// ProcessMarketOrder gets definite orders quantitiy from orderbook
+// ProcessMarketOrder immediately gets definite quantity from the order book with market price
+// Arguments:
+//      side     - what do you want to do (ob.Sell or ob.Buy)
+//      quantity - how much quantity you want to sell or buy
+//      * to create new decimal number you should use decimal.New() func
+//        read more at https://github.com/shopspring/decimal
+// Return:
+//      error        - not nil if price is less or equal 0
+//      done         - not nil if your market order produse ends of anoter orders, this order will add to
+//                     the "done" slice
+//      partial      - not nil if your order has done but top order is not fully done
+//      quantityLeft - more than zero if it is not enought orders to process all quantity
 func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal, err error) {
 	if quantity.Sign() <= 0 {
 		return nil, nil, decimal.Zero, ErrInvalidQuantity
@@ -52,7 +63,21 @@ func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 	return
 }
 
-// ProcessLimitOrder places limit order to the orderbook
+// ProcessLimitOrder places new order to the OrderBook
+// Arguments:
+//      side     - what do you want to do (ob.Sell or ob.Buy)
+//      orderID  - unique order ID in depth
+//      quantity - how much quantity you want to sell or buy
+//      price    - no more expensive (or cheaper) this price
+//      * to create new decimal number you should use decimal.New() func
+//        read more at https://github.com/shopspring/decimal
+// Return:
+//      error   - not nil if quantity (or price) is less or equal 0. Or if order with given ID is exists
+//      done    - not nil if your order produse ends of anoter order, this order will add to
+//                the "done" slice. If your order have done too, it will be places to this array too
+//      partial - not nil if your order has done but top order is not fully done. Or if your order is
+//                partial done and placed to the orderbook without full quantity - partial will contain
+//                your order with quantity to left
 func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, err error) {
 	if _, ok := ob.orders[orderID]; ok {
 		return nil, nil, ErrOrderExists
@@ -122,7 +147,7 @@ func (ob *OrderBook) processQueue(orderQueue *OrderQueue, quantityToTrade decima
 	return
 }
 
-// CancelOrder removes order from orderbook
+// CancelOrder removes order with given ID from the order book
 func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	e, ok := ob.orders[orderID]
 	if !ok {
