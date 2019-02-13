@@ -8,7 +8,7 @@ import (
 )
 
 func TestLimitOrder(t *testing.T) {
-	ob := NewOrderbook()
+	ob := NewOrderBook()
 
 	for i := 50; i < 100; i = i + 10 {
 		ob.ProcessLimitOrder(Buy, fmt.Sprintf("o-%d", i), decimal.New(1, 0), decimal.New(int64(i), 0))

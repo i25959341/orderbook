@@ -51,12 +51,8 @@ func (oq *OrderQueue) Tail() *list.Element {
 
 // Append adds order to tail of the queue
 func (oq *OrderQueue) Append(o *Order) *list.Element {
-	e := oq.orders.PushBack(o)
-	if e != nil {
-		oq.volume = oq.volume.Add(o.Quantity())
-		return e
-	}
-	return nil
+	oq.volume = oq.volume.Add(o.Quantity())
+	return oq.orders.PushBack(o)
 }
 
 // Update sets up new order to list value
@@ -69,12 +65,8 @@ func (oq *OrderQueue) Update(e *list.Element, o *Order) *list.Element {
 
 // Remove removes order from the queue and link order chain
 func (oq *OrderQueue) Remove(e *list.Element) *Order {
-	o := oq.orders.Remove(e)
-	if o != nil {
-		oq.volume = oq.volume.Sub(o.(*Order).Quantity())
-		return o.(*Order)
-	}
-	return nil
+	oq.volume = oq.volume.Sub(e.Value.(*Order).Quantity())
+	return oq.orders.Remove(e).(*Order)
 }
 
 func (oq *OrderQueue) String() string {

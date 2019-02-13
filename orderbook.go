@@ -7,8 +7,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Orderbook implements standard matching algorithm
-type Orderbook struct {
+// OrderBook implements standard matching algorithm
+type OrderBook struct {
 	orders map[string]*list.Element // orderID -> *Order (*list.Element.Value.(*Order))
 
 	asks *OrderTree
@@ -16,8 +16,8 @@ type Orderbook struct {
 }
 
 // NewOrder creates Orderbook object
-func NewOrderbook() *Orderbook {
-	return &Orderbook{
+func NewOrderBook() *OrderBook {
+	return &OrderBook{
 		orders: map[string]*list.Element{},
 		bids:   NewOrderTree(),
 		asks:   NewOrderTree(),
@@ -25,7 +25,7 @@ func NewOrderbook() *Orderbook {
 }
 
 // ProcessMarketOrder gets definite orders quantitiy from orderbook
-func (ob *Orderbook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal, err error) {
+func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal, err error) {
 	if quantity.Sign() <= 0 {
 		return nil, nil, decimal.Zero, ErrInvalidQuantity
 	}
@@ -51,7 +51,7 @@ func (ob *Orderbook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 }
 
 // ProcessLimitOrder places limit order to the orderbook
-func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, err error) {
+func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, err error) {
 	if _, ok := ob.orders[orderID]; ok {
 		return nil, nil, ErrOrderExists
 	}
@@ -102,7 +102,7 @@ func (ob *Orderbook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 	return
 }
 
-func (ob *Orderbook) processQueue(orderQueue *OrderQueue, quantityToTrade decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal) {
+func (ob *OrderBook) processQueue(orderQueue *OrderQueue, quantityToTrade decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal) {
 	quantityLeft = quantityToTrade
 
 	for orderQueue.Len() > 0 && quantityLeft.Sign() > 0 {
@@ -123,7 +123,7 @@ func (ob *Orderbook) processQueue(orderQueue *OrderQueue, quantityToTrade decima
 }
 
 // CancelOrder removes order from orderbook
-func (ob *Orderbook) CancelOrder(orderID string) *Order {
+func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	e, ok := ob.orders[orderID]
 	if !ok {
 		return nil
@@ -138,6 +138,6 @@ func (ob *Orderbook) CancelOrder(orderID string) *Order {
 	return ob.asks.Remove(e)
 }
 
-func (ob *Orderbook) String() string {
+func (ob *OrderBook) String() string {
 	return ob.asks.String() + "\r\n------------------------------------" + ob.bids.String()
 }
