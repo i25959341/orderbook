@@ -72,8 +72,8 @@ asks: 110 -> 5      110 -> 5
 bids: 90  -> 5      90  -> 5
       80  -> 1      80  -> 1
 
-done    - 2 (or more orders)
-partial - uinqueID order
+done    - nil
+partial - nil
 
 ```
 
@@ -106,7 +106,7 @@ partial - 1 order with price 110
 
 ```
 
-### ProcessMarkeyOrder
+### ProcessMarketOrder
 
 ```go
 // ProcessMarketOrder immediately gets definite quantity from the order book with market price
