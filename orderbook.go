@@ -47,6 +47,8 @@ func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 			quantity = quantityLeft
 		}
 	}
+
+	quantityLeft = quantity
 	return
 }
 

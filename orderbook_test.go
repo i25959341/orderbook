@@ -54,7 +54,7 @@ func TestLimitPlace(t *testing.T) {
 	return
 }
 
-func TestLimitDone(t *testing.T) {
+func TestLimitProcess(t *testing.T) {
 	ob := createDepth(decimal.New(2, 0))
 
 	done, partial, err := ob.ProcessLimitOrder(Buy, "order-b100", decimal.New(1, 0), decimal.New(100, 0))
@@ -91,6 +91,22 @@ func TestLimitDone(t *testing.T) {
 
 	t.Log(ob)
 
+	if _, _, err := ob.ProcessLimitOrder(Sell, "buy-70", decimal.New(11, 0), decimal.New(40, 0)); err == nil {
+		t.Fatal("Can add existing order")
+	}
+
+	if _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(0, 0), decimal.New(40, 0)); err == nil {
+		t.Fatal("Can add empty quantity order")
+	}
+
+	if _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(10, 0), decimal.New(0, 0)); err == nil {
+		t.Fatal("Can add zero price")
+	}
+
+	if o := ob.CancelOrder("order-b100"); o != nil {
+		t.Fatal("Can cancel done order")
+	}
+
 	done, partial, err = ob.ProcessLimitOrder(Sell, "order-s40", decimal.New(11, 0), decimal.New(40, 0))
 	if err != nil {
 		t.Fatal(err)
@@ -108,16 +124,43 @@ func TestLimitDone(t *testing.T) {
 	t.Log(ob)
 }
 
-// ob := NewOrderBook()
-// for i := 50; i < 100; i = i + 10 {
-// 	ob.ProcessLimitOrder(Buy, fmt.Sprintf("o-%d", i), decimal.New(1, 0), decimal.New(int64(i), 0))
-// }
-// for i := 100; i < 150; i = i + 10 {
-// 	ob.ProcessLimitOrder(Sell, fmt.Sprintf("o-%d", i), decimal.New(1, 0), decimal.New(int64(i), 0))
-// }
-// t.Log(ob.ProcessMarketOrder(Buy, decimal.New(3, 0)))
-// t.Log(ob.ProcessMarketOrder(Sell, decimal.New(3, 0)))
-// t.Log(ob.ProcessLimitOrder(Buy, "order-b100", decimal.New(20, 0), decimal.New(100, 0)))
-// t.Log(ob.ProcessLimitOrder(Sell, "order-s100", decimal.New(30, 0), decimal.New(10, 0)))
-// t.Log(ob.ProcessLimitOrder(Buy, "order-b1000", decimal.New(30, 0), decimal.New(1000, 0)))
-//t.Log(createDepth(decimal.New(1, 0)))
+func TestMarketProcess(t *testing.T) {
+	ob := createDepth(decimal.New(2, 0))
+
+	done, partial, left, err := ob.ProcessMarketOrder(Buy, decimal.New(3, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if left.Sign() > 0 {
+		t.Fatal("Wrong quantity left")
+	}
+
+	t.Log("Done", done)
+	t.Log("Partial", partial)
+	t.Log(ob)
+
+	if _, _, _, err := ob.ProcessMarketOrder(Buy, decimal.New(0, 0)); err == nil {
+		t.Fatal("Can add zero quantity order")
+	}
+
+	done, partial, left, err = ob.ProcessMarketOrder(Sell, decimal.New(12, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if partial != nil {
+		t.Fatal("Partial is not nil")
+	}
+
+	if len(done) != 5 {
+		t.Fatal("Invalid done amount")
+	}
+
+	if !left.Equal(decimal.New(2, 0)) {
+		t.Fatal("Invalid left amount", left)
+	}
+
+	t.Log("Done", done)
+	t.Log(ob)
+}
