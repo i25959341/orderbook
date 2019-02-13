@@ -2,6 +2,7 @@ package orderbook
 
 import "errors"
 
+// OrderBook erros
 var (
 	ErrInvalidQuantity = errors.New("orderbook: invalid order quantity")
 	ErrInvalidPrice    = errors.New("orderbook: invalid order price")

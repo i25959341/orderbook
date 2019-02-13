@@ -15,7 +15,7 @@ type OrderBook struct {
 	bids *OrderTree
 }
 
-// NewOrder creates Orderbook object
+// NewOrderBook creates Orderbook object
 func NewOrderBook() *OrderBook {
 	return &OrderBook{
 		orders: map[string]*list.Element{},

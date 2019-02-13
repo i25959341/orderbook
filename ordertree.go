@@ -51,20 +51,12 @@ func (ot *OrderTree) Append(o *Order) *list.Element {
 	priceQueue, ok := ot.prices[strPrice]
 	if !ok {
 		priceQueue = NewOrderQueue(o.Price())
+		ot.prices[strPrice] = priceQueue
+		ot.priceTree.Put(price, priceQueue)
+		ot.depth++
 	}
-
-	e := priceQueue.Append(o)
-	if e != nil {
-		if !ok {
-			ot.prices[strPrice] = priceQueue
-			ot.priceTree.Put(price, priceQueue)
-			ot.depth++
-		}
-
-		ot.numOrders++
-	}
-
-	return e
+	ot.numOrders++
+	return priceQueue.Append(o)
 }
 
 // Remove removes order from definite price level
@@ -72,26 +64,20 @@ func (ot *OrderTree) Remove(e *list.Element) *Order {
 	price := e.Value.(*Order).Price()
 	strPrice := price.String()
 
-	priceQueue, ok := ot.prices[strPrice]
-	if !ok {
-		return nil
-	}
-
+	priceQueue := ot.prices[strPrice]
 	o := priceQueue.Remove(e)
-	if o != nil {
-		if priceQueue.Len() == 0 {
-			delete(ot.prices, strPrice)
-			ot.priceTree.Remove(price)
-			ot.depth--
-		}
 
-		ot.numOrders--
+	if priceQueue.Len() == 0 {
+		delete(ot.prices, strPrice)
+		ot.priceTree.Remove(price)
+		ot.depth--
 	}
 
+	ot.numOrders--
 	return o
 }
 
-// MaxPrice returns maximal level of price
+// MaxPriceQueue returns maximal level of price
 func (ot *OrderTree) MaxPriceQueue() *OrderQueue {
 	if ot.depth > 0 {
 		if value, found := ot.priceTree.GetMax(); found {
@@ -101,7 +87,7 @@ func (ot *OrderTree) MaxPriceQueue() *OrderQueue {
 	return nil
 }
 
-// MaxPrice returns minimal level of price
+// MinPriceQueue returns maximal level of price
 func (ot *OrderTree) MinPriceQueue() *OrderQueue {
 	if ot.depth > 0 {
 		if value, found := ot.priceTree.GetMin(); found {
@@ -115,7 +101,7 @@ func (ot *OrderTree) String() string {
 	sb := strings.Builder{}
 
 	prices := []decimal.Decimal{}
-	for k, _ := range ot.prices {
+	for k := range ot.prices {
 		num, _ := decimal.NewFromString(k)
 		prices = append(prices, num)
 	}
