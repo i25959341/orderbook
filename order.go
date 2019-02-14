@@ -1,45 +1,57 @@
 package orderbook
 
 import (
-	"strconv"
+	"fmt"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
 
+// Order strores information about request
 type Order struct {
-	timestamp int
+	side      Side
+	id        string
+	timestamp time.Time
 	quantity  decimal.Decimal
 	price     decimal.Decimal
-	orderID   string
-	tradeID   string
-	nextOrder *Order
-	prevOrder *Order
-	orderList *OrderList
 }
 
-func NewOrder(quote map[string]string, orderList *OrderList) *Order {
-	timestamp, _ := strconv.Atoi(quote["timestamp"])
-	quantity, _ := decimal.NewFromString(quote["quantity"])
-	price, _ := decimal.NewFromString(quote["price"])
-	orderID := quote["order_id"]
-	tradeID := quote["trade_id"]
-	return &Order{timestamp: timestamp, quantity: quantity, price: price, orderID: orderID,
-		tradeID: tradeID, nextOrder: nil, prevOrder: nil, orderList: orderList}
-}
-
-func (o *Order) NextOrder() *Order {
-	return o.nextOrder
-}
-
-func (o *Order) PrevOrder() *Order {
-	return o.prevOrder
-}
-
-func (o *Order) UpdateQuantity(newQuantity decimal.Decimal, newTimestamp int) {
-	if newQuantity.GreaterThan(o.quantity) && o.orderList.tail_order != o {
-		o.orderList.MoveToTail(o)
+// NewOrder creates new constant object Order
+func NewOrder(orderID string, side Side, quantity, price decimal.Decimal, timestamp time.Time) *Order {
+	return &Order{
+		id:        orderID,
+		side:      side,
+		quantity:  quantity,
+		price:     price,
+		timestamp: timestamp,
 	}
-	o.orderList.volume = o.orderList.volume.Sub(o.quantity.Sub(newQuantity))
-	o.timestamp = newTimestamp
-	o.quantity = newQuantity
+}
+
+// ID returns orderID field copy
+func (o *Order) ID() string {
+	return o.id
+}
+
+// Side returns side of the order
+func (o *Order) Side() Side {
+	return o.side
+}
+
+// Quantity returns quantity field copy
+func (o *Order) Quantity() decimal.Decimal {
+	return o.quantity
+}
+
+// Price returns price field copy
+func (o *Order) Price() decimal.Decimal {
+	return o.price
+}
+
+// Time returns timestamp field copy
+func (o *Order) Time() time.Time {
+	return o.timestamp
+}
+
+func (o *Order) String() string {
+	return fmt.Sprintf("\n\"%s\":\n\tside: %s\n\tquantity: %s\n\tprice: %s\n\ttime: %s\n", o.ID(), o.Side(), o.Quantity(), o.Price(), o.Time())
 }

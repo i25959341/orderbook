@@ -3,185 +3,179 @@ package orderbook
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
 
-var limitOrders = make([]map[string]string, 0)
-
-func TestNewOrderBook(t *testing.T) {
-	orderBook := NewOrderBook()
-
-	if !(orderBook.VolumeAtPrice("bid", decimal.Zero).Equal(decimal.Zero)) {
-		t.Errorf("orderBook.VolumeAtPrice incorrect, got: %d, want: %d.", orderBook.VolumeAtPrice("bid", decimal.Zero), decimal.Zero)
+func addDepth(ob *OrderBook, prefix string, quantity decimal.Decimal) {
+	for i := 50; i < 100; i = i + 10 {
+		ob.ProcessLimitOrder(Buy, fmt.Sprintf("%sbuy-%d", prefix, i), quantity, decimal.New(int64(i), 0))
 	}
 
-	if !(orderBook.BestAsk().Equal(decimal.Zero)) {
-		t.Errorf("orderBook.BestAsk incorrect, got: %d, want: %d.", orderBook.BestAsk(), decimal.Zero)
+	for i := 100; i < 150; i = i + 10 {
+		ob.ProcessLimitOrder(Sell, fmt.Sprintf("%ssell-%d", prefix, i), quantity, decimal.New(int64(i), 0))
 	}
 
-	if !(orderBook.WorstBid().Equal(decimal.Zero)) {
-		t.Errorf("orderBook.WorstBid incorrect, got: %d, want: %d.", orderBook.WorstBid(), decimal.Zero)
-	}
-
-	if !(orderBook.WorstAsk().Equal(decimal.Zero)) {
-		t.Errorf("orderBook.WorstAsk incorrect, got: %d, want: %d.", orderBook.WorstAsk(), decimal.Zero)
-	}
-
-	if !(orderBook.BestBid().Equal(decimal.Zero)) {
-		t.Errorf("orderBook.BestBid incorrect, got: %d, want: %d.", orderBook.BestBid(), decimal.Zero)
-	}
+	return
 }
 
-func TestOrderBook(t *testing.T) {
-	orderBook := NewOrderBook()
-
-	fmt.Println(orderBook.BestAsk())
-
-	dummyOrder := make(map[string]string)
-	dummyOrder["type"] = "limit"
-	dummyOrder["side"] = "ask"
-	dummyOrder["quantity"] = "5"
-	dummyOrder["price"] = "101"
-	dummyOrder["trade_id"] = "100"
-
-	limitOrders = append(limitOrders, dummyOrder)
-
-	dummyOrder1 := make(map[string]string)
-	dummyOrder1["type"] = "limit"
-	dummyOrder1["side"] = "ask"
-	dummyOrder1["quantity"] = "5"
-	dummyOrder1["price"] = "103"
-	dummyOrder1["trade_id"] = "101"
-
-	limitOrders = append(limitOrders, dummyOrder1)
-
-	dummyOrder2 := make(map[string]string)
-	dummyOrder2["type"] = "limit"
-	dummyOrder2["side"] = "ask"
-	dummyOrder2["quantity"] = "5"
-	dummyOrder2["price"] = "101"
-	dummyOrder2["trade_id"] = "102"
-
-	limitOrders = append(limitOrders, dummyOrder2)
-
-	dummyOrder7 := make(map[string]string)
-	dummyOrder7["type"] = "limit"
-	dummyOrder7["side"] = "ask"
-	dummyOrder7["quantity"] = "5"
-	dummyOrder7["price"] = "101"
-	dummyOrder7["trade_id"] = "103"
-
-	limitOrders = append(limitOrders, dummyOrder7)
-
-	dummyOrder3 := make(map[string]string)
-	dummyOrder3["type"] = "limit"
-	dummyOrder3["side"] = "bid"
-	dummyOrder3["quantity"] = "5"
-	dummyOrder3["price"] = "99"
-	dummyOrder3["trade_id"] = "100"
-
-	limitOrders = append(limitOrders, dummyOrder3)
-
-	dummyOrder4 := make(map[string]string)
-	dummyOrder4["type"] = "limit"
-	dummyOrder4["side"] = "bid"
-	dummyOrder4["quantity"] = "5"
-	dummyOrder4["price"] = "98"
-	dummyOrder4["trade_id"] = "101"
-
-	limitOrders = append(limitOrders, dummyOrder4)
-
-	dummyOrder5 := make(map[string]string)
-	dummyOrder5["type"] = "limit"
-	dummyOrder5["side"] = "bid"
-	dummyOrder5["quantity"] = "5"
-	dummyOrder5["price"] = "99"
-	dummyOrder5["trade_id"] = "102"
-
-	limitOrders = append(limitOrders, dummyOrder5)
-
-	dummyOrder6 := make(map[string]string)
-	dummyOrder6["type"] = "limit"
-	dummyOrder6["side"] = "bid"
-	dummyOrder6["quantity"] = "5"
-	dummyOrder6["price"] = "97"
-	dummyOrder6["trade_id"] = "103"
-
-	limitOrders = append(limitOrders, dummyOrder6)
-
-	for _, order := range limitOrders {
-		orderBook.ProcessOrder(order, true)
+func TestLimitPlace(t *testing.T) {
+	ob := NewOrderBook()
+	quantity := decimal.New(2, 0)
+	for i := 50; i < 100; i = i + 10 {
+		done, partial, err := ob.ProcessLimitOrder(Buy, fmt.Sprintf("buy-%d", i), quantity, decimal.New(int64(i), 0))
+		if len(done) != 0 {
+			t.Fatal("OrderBook failed to process limit order (done is not empty)")
+		}
+		if partial != nil {
+			t.Fatal("OrderBook failed to process limit order (partial is not empty)")
+		}
+		if partial != nil {
+			t.Fatal(err)
+		}
 	}
 
-	value, _ := decimal.NewFromString("101")
-	if !(orderBook.BestAsk().Equal(value)) {
-		t.Errorf("orderBook.BestAsk incorrect, got: %d, want: %d.", orderBook.BestAsk(), value)
+	for i := 100; i < 150; i = i + 10 {
+		done, partial, err := ob.ProcessLimitOrder(Sell, fmt.Sprintf("sell-%d", i), quantity, decimal.New(int64(i), 0))
+		if len(done) != 0 {
+			t.Fatal("OrderBook failed to process limit order (done is not empty)")
+		}
+		if partial != nil {
+			t.Fatal("OrderBook failed to process limit order (partial is not empty)")
+		}
+		if partial != nil {
+			t.Fatal(err)
+		}
 	}
 
-	value, _ = decimal.NewFromString("103")
-	if !(orderBook.WorstAsk().Equal(value)) {
-		t.Errorf("orderBook.WorstBid incorrect, got: %d, want: %d.", orderBook.WorstAsk(), value)
+	t.Log(ob)
+	return
+}
+
+func TestLimitProcess(t *testing.T) {
+	ob := NewOrderBook()
+	addDepth(ob, "", decimal.New(2, 0))
+
+	done, partial, err := ob.ProcessLimitOrder(Buy, "order-b100", decimal.New(1, 0), decimal.New(100, 0))
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	value, _ = decimal.NewFromString("99")
-	if !(orderBook.BestBid().Equal(value)) {
-		t.Errorf("orderBook.BestBid incorrect, got: %d, want: %d.", orderBook.BestBid(), value)
+	t.Log("Done:", done)
+	if done[0].ID() != "order-b100" {
+		t.Fatal("Wrong done id")
 	}
 
-	value, _ = decimal.NewFromString("97")
-	if !(orderBook.WorstBid().Equal(value)) {
-		t.Errorf("orderBook.BestBid incorrect, got: %d, want: %d.", orderBook.WorstBid(), value)
+	t.Log("Partial:", partial)
+	if partial.ID() != "sell-100" {
+		t.Fatal("Wrong partial id")
 	}
 
-	value, _ = decimal.NewFromString("15")
-	pricePoint, _ := decimal.NewFromString("101")
-	if !(orderBook.VolumeAtPrice("ask", pricePoint).Equal(value)) {
-		t.Errorf("orderBook.VolumeAtPrice incorrect, got: %d, want: %d.", orderBook.VolumeAtPrice("bid", decimal.Zero), decimal.Zero)
+	t.Log(ob)
+
+	done, partial, err = ob.ProcessLimitOrder(Buy, "order-b150", decimal.New(10, 0), decimal.New(150, 0))
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	//Submitting a limit order that crosses the opposing best price will result in a trade
-	marketOrder := make(map[string]string)
-	marketOrder["type"] = "limit"
-	marketOrder["side"] = "bid"
-	marketOrder["quantity"] = "2"
-	marketOrder["price"] = "102"
-	marketOrder["trade_id"] = "109"
-
-	trades, order_in_book := orderBook.ProcessOrder(marketOrder, true)
-
-	tradedPrice := trades[0]["price"]
-	tradedQuantity := trades[0]["quantity"]
-
-	if !(tradedPrice == "101" && tradedQuantity == "2" && len(order_in_book) == 0) {
-		t.Errorf("orderBook.ProcessOrder incorrect")
+	t.Log("Done:", done)
+	if len(done) != 5 {
+		t.Fatal("Wrong done quantity")
 	}
 
-	// If a limit crosses but is only partially matched, the remaning volume will
-	// be placed in the book as an outstanding order
-	bigOrder := make(map[string]string)
-	bigOrder["type"] = "limit"
-	bigOrder["side"] = "bid"
-	bigOrder["quantity"] = "50"
-	bigOrder["price"] = "102"
-	bigOrder["trade_id"] = "110"
-
-	trades, order_in_book = orderBook.ProcessOrder(bigOrder, true)
-
-	fmt.Println(trades)
-	fmt.Println(order_in_book)
-
-	if !(len(order_in_book) != 0) {
-		t.Errorf("orderBook.ProcessOrder incorrect")
+	t.Log("Partial:", partial)
+	if partial.ID() != "order-b150" {
+		t.Fatal("Wrong partial id")
 	}
 
-	// Market orders only require that a user specifies a side (bid or ask), a quantity, and their unique trade id
-	marketOrder = make(map[string]string)
-	marketOrder["type"] = "market"
-	marketOrder["side"] = "ask"
-	marketOrder["quantity"] = "20"
-	marketOrder["trade_id"] = "111"
+	t.Log(ob)
 
-	trades, order_in_book = orderBook.ProcessOrder(marketOrder, true)
+	if _, _, err := ob.ProcessLimitOrder(Sell, "buy-70", decimal.New(11, 0), decimal.New(40, 0)); err == nil {
+		t.Fatal("Can add existing order")
+	}
 
+	if _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(0, 0), decimal.New(40, 0)); err == nil {
+		t.Fatal("Can add empty quantity order")
+	}
+
+	if _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(10, 0), decimal.New(0, 0)); err == nil {
+		t.Fatal("Can add zero price")
+	}
+
+	if o := ob.CancelOrder("order-b100"); o != nil {
+		t.Fatal("Can cancel done order")
+	}
+
+	done, partial, err = ob.ProcessLimitOrder(Sell, "order-s40", decimal.New(11, 0), decimal.New(40, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("Done:", done)
+	if len(done) != 7 {
+		t.Fatal("Wrong done quantity")
+	}
+
+	if partial != nil {
+		t.Fatal("Wrong partial")
+	}
+
+	t.Log(ob)
+}
+
+func TestMarketProcess(t *testing.T) {
+	ob := NewOrderBook()
+	addDepth(ob, "", decimal.New(2, 0))
+
+	done, partial, left, err := ob.ProcessMarketOrder(Buy, decimal.New(3, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if left.Sign() > 0 {
+		t.Fatal("Wrong quantity left")
+	}
+
+	t.Log("Done", done)
+	t.Log("Partial", partial)
+	t.Log(ob)
+
+	if _, _, _, err := ob.ProcessMarketOrder(Buy, decimal.New(0, 0)); err == nil {
+		t.Fatal("Can add zero quantity order")
+	}
+
+	done, partial, left, err = ob.ProcessMarketOrder(Sell, decimal.New(12, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if partial != nil {
+		t.Fatal("Partial is not nil")
+	}
+
+	if len(done) != 5 {
+		t.Fatal("Invalid done amount")
+	}
+
+	if !left.Equal(decimal.New(2, 0)) {
+		t.Fatal("Invalid left amount", left)
+	}
+
+	t.Log("Done", done)
+	t.Log(ob)
+}
+
+func BenchmarkLimitOrder(b *testing.B) {
+	ob := NewOrderBook()
+	stopwatch := time.Now()
+	for i := 0; i < b.N; i++ {
+		addDepth(ob, "05-", decimal.New(10, 0))                                           // 10 ts
+		addDepth(ob, "10-", decimal.New(10, 0))                                           // 10 ts
+		addDepth(ob, "15-", decimal.New(10, 0))                                           // 10 ts
+		ob.ProcessLimitOrder(Buy, "order-b150", decimal.New(160, 0), decimal.New(150, 0)) // 1 ts
+		ob.ProcessMarketOrder(Sell, decimal.New(200, 0))                                  // 1 ts = total 32
+	}
+	elapsed := time.Since(stopwatch)
+	fmt.Printf("\n\nElapsed: %s\nTransactions per second (avg): %f\n", elapsed, float64(b.N*32)/elapsed.Seconds())
 }
