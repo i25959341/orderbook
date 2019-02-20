@@ -1,6 +1,7 @@
 package orderbook
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -63,6 +64,35 @@ func TestOrderSide(t *testing.T) {
 	}
 
 	t.Log(ot)
+}
+
+func TestOrderSideJSON(t *testing.T) {
+	data := NewOrderSide()
+
+	data.Append(NewOrder("one", Buy, decimal.New(11, -1), decimal.New(11, 1), time.Now().UTC()))
+	data.Append(NewOrder("two", Buy, decimal.New(22, -1), decimal.New(22, 1), time.Now().UTC()))
+	data.Append(NewOrder("three", Sell, decimal.New(33, -1), decimal.New(33, 1), time.Now().UTC()))
+	data.Append(NewOrder("four", Sell, decimal.New(44, -1), decimal.New(44, 1), time.Now().UTC()))
+
+	data.Append(NewOrder("five", Buy, decimal.New(11, -1), decimal.New(11, 1), time.Now().UTC()))
+	data.Append(NewOrder("six", Buy, decimal.New(22, -1), decimal.New(22, 1), time.Now().UTC()))
+	data.Append(NewOrder("seven", Sell, decimal.New(33, -1), decimal.New(33, 1), time.Now().UTC()))
+	data.Append(NewOrder("eight", Sell, decimal.New(44, -1), decimal.New(44, 1), time.Now().UTC()))
+
+	result, _ := json.Marshal(data)
+	t.Log(string(result))
+
+	data = NewOrderSide()
+	if err := json.Unmarshal(result, data); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(data)
+
+	err := json.Unmarshal([]byte(`[{"side":"fake"}]`), &data)
+	if err == nil {
+		t.Fatal("can unmarshal unsupported value")
+	}
 }
 
 func BenchmarkOrderSide(b *testing.B) {

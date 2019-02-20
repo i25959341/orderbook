@@ -2,6 +2,7 @@ package orderbook
 
 import (
 	"container/list"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -20,66 +21,68 @@ type OrderSide struct {
 	depth     int
 }
 
+func rbtComparator(a, b interface{}) int {
+	return a.(decimal.Decimal).Cmp(b.(decimal.Decimal))
+}
+
 // NewOrderSide creates new OrderSide manager
 func NewOrderSide() *OrderSide {
 	return &OrderSide{
 		priceTree: &rbtx.RedBlackTreeExtended{
-			Tree: rbt.NewWith(func(a, b interface{}) int {
-				return a.(decimal.Decimal).Cmp(b.(decimal.Decimal))
-			}),
+			Tree: rbt.NewWith(rbtComparator),
 		},
 		prices: map[string]*OrderQueue{},
 	}
 }
 
 // Len returns amount of orders
-func (ot *OrderSide) Len() int {
-	return ot.numOrders
+func (os *OrderSide) Len() int {
+	return os.numOrders
 }
 
 // Depth returns depth of market
-func (ot *OrderSide) Depth() int {
-	return ot.depth
+func (os *OrderSide) Depth() int {
+	return os.depth
 }
 
 // Append appends order to definite price level
-func (ot *OrderSide) Append(o *Order) *list.Element {
+func (os *OrderSide) Append(o *Order) *list.Element {
 	price := o.Price()
 	strPrice := price.String()
 
-	priceQueue, ok := ot.prices[strPrice]
+	priceQueue, ok := os.prices[strPrice]
 	if !ok {
 		priceQueue = NewOrderQueue(o.Price())
-		ot.prices[strPrice] = priceQueue
-		ot.priceTree.Put(price, priceQueue)
-		ot.depth++
+		os.prices[strPrice] = priceQueue
+		os.priceTree.Put(price, priceQueue)
+		os.depth++
 	}
-	ot.numOrders++
+	os.numOrders++
 	return priceQueue.Append(o)
 }
 
 // Remove removes order from definite price level
-func (ot *OrderSide) Remove(e *list.Element) *Order {
+func (os *OrderSide) Remove(e *list.Element) *Order {
 	price := e.Value.(*Order).Price()
 	strPrice := price.String()
 
-	priceQueue := ot.prices[strPrice]
+	priceQueue := os.prices[strPrice]
 	o := priceQueue.Remove(e)
 
 	if priceQueue.Len() == 0 {
-		delete(ot.prices, strPrice)
-		ot.priceTree.Remove(price)
-		ot.depth--
+		delete(os.prices, strPrice)
+		os.priceTree.Remove(price)
+		os.depth--
 	}
 
-	ot.numOrders--
+	os.numOrders--
 	return o
 }
 
 // MaxPriceQueue returns maximal level of price
-func (ot *OrderSide) MaxPriceQueue() *OrderQueue {
-	if ot.depth > 0 {
-		if value, found := ot.priceTree.GetMax(); found {
+func (os *OrderSide) MaxPriceQueue() *OrderQueue {
+	if os.depth > 0 {
+		if value, found := os.priceTree.GetMax(); found {
 			return value.(*OrderQueue)
 		}
 	}
@@ -87,20 +90,20 @@ func (ot *OrderSide) MaxPriceQueue() *OrderQueue {
 }
 
 // MinPriceQueue returns maximal level of price
-func (ot *OrderSide) MinPriceQueue() *OrderQueue {
-	if ot.depth > 0 {
-		if value, found := ot.priceTree.GetMin(); found {
+func (os *OrderSide) MinPriceQueue() *OrderQueue {
+	if os.depth > 0 {
+		if value, found := os.priceTree.GetMin(); found {
 			return value.(*OrderQueue)
 		}
 	}
 	return nil
 }
 
-func (ot *OrderSide) String() string {
+func (os *OrderSide) String() string {
 	sb := strings.Builder{}
 
 	prices := []decimal.Decimal{}
-	for k := range ot.prices {
+	for k := range os.prices {
 		num, _ := decimal.NewFromString(k)
 		prices = append(prices, num)
 	}
@@ -125,8 +128,47 @@ func (ot *OrderSide) String() string {
 	}
 
 	for _, price := range strPrices {
-		sb.WriteString(fmt.Sprintf("\n%s -> %s", strings.Repeat(" ", maxLen-len(price))+price, ot.prices[price].Volume()))
+		sb.WriteString(fmt.Sprintf("\n%s -> %s", strings.Repeat(" ", maxLen-len(price))+price, os.prices[price].Volume()))
 	}
 
 	return sb.String()
+}
+
+func (os *OrderSide) MarshalJSON() ([]byte, error) {
+	return json.Marshal(
+		&struct {
+			NumOrders int                    `json:"numOrders"`
+			Depth     int                    `json:"depth"`
+			Prices    map[string]*OrderQueue `json:"prices"`
+		}{
+			NumOrders: os.numOrders,
+			Depth:     os.depth,
+			Prices:    os.prices,
+		},
+	)
+}
+
+func (os *OrderSide) UnmarshalJSON(data []byte) error {
+	obj := struct {
+		NumOrders int                    `json:"numOrders"`
+		Depth     int                    `json:"depth"`
+		Prices    map[string]*OrderQueue `json:"prices"`
+	}{}
+
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+
+	os.numOrders = obj.NumOrders
+	os.depth = obj.Depth
+	os.prices = obj.Prices
+	os.priceTree = &rbtx.RedBlackTreeExtended{
+		Tree: rbt.NewWith(rbtComparator),
+	}
+
+	for price, queue := range os.prices {
+		os.priceTree.Put(decimal.RequireFromString(price), queue)
+	}
+
+	return nil
 }

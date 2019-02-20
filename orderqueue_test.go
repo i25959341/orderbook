@@ -77,6 +77,30 @@ func TestOrderQueue(t *testing.T) {
 	t.Log(oq)
 }
 
+func TestOrderQueueJSON(t *testing.T) {
+	data := NewOrderQueue(decimal.New(111, 0))
+
+	data.Append(NewOrder("one", Buy, decimal.New(11, -1), decimal.New(11, 1), time.Now().UTC()))
+	data.Append(NewOrder("two", Buy, decimal.New(22, -1), decimal.New(22, 1), time.Now().UTC()))
+	data.Append(NewOrder("three", Sell, decimal.New(33, -1), decimal.New(33, 1), time.Now().UTC()))
+	data.Append(NewOrder("four", Sell, decimal.New(44, -1), decimal.New(44, 1), time.Now().UTC()))
+
+	result, _ := json.Marshal(data)
+	t.Log(string(result))
+
+	data = NewOrderQueue(decimal.Zero)
+	if err := json.Unmarshal(result, data); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(data)
+
+	err := json.Unmarshal([]byte(`[{"side":"fake"}]`), &data)
+	if err == nil {
+		t.Fatal("can unmarshal unsupported value")
+	}
+}
+
 func BenchmarkOrderQueue(b *testing.B) {
 	price := decimal.New(100, 0)
 	orderQueue := NewOrderQueue(price)
@@ -95,28 +119,4 @@ func BenchmarkOrderQueue(b *testing.B) {
 	}
 	elapsed := time.Since(stopwatch)
 	fmt.Printf("\n\nElapsed: %s\nTransactions per second: %f\n", elapsed, float64(b.N)/elapsed.Seconds())
-}
-
-func TestOrderQueueJSON(t *testing.T) {
-	data := NewOrderQueue(decimal.New(111, 0))
-
-	data.Append(NewOrder("one", Buy, decimal.New(11, -1), decimal.New(11, 1), time.Now().UTC()))
-	data.Append(NewOrder("two", Buy, decimal.New(22, -1), decimal.New(22, 1), time.Now().UTC()))
-	data.Append(NewOrder("three", Sell, decimal.New(33, -1), decimal.New(33, 1), time.Now().UTC()))
-	data.Append(NewOrder("four", Sell, decimal.New(44, -1), decimal.New(44, 1), time.Now().UTC()))
-
-	result, _ := json.Marshal(data)
-	t.Log(string(result))
-
-	data = NewOrderQueue(decimal.Zero)
-	if err := json.Unmarshal(result, data); err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(data.String())
-
-	err := json.Unmarshal([]byte(`[{"side":"fake"}]`), &data)
-	if err == nil {
-		t.Fatal("can unmarshal unsupported value")
-	}
 }
