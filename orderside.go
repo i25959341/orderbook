@@ -99,6 +99,18 @@ func (os *OrderSide) MinPriceQueue() *OrderQueue {
 	return nil
 }
 
+// Orders returns all of *list.Element orders
+func (os *OrderSide) Orders() (orders []*list.Element) {
+	for _, price := range os.prices {
+		iter := price.Head()
+		for iter != nil {
+			orders = append(orders, iter)
+			iter = iter.Next()
+		}
+	}
+	return
+}
+
 func (os *OrderSide) String() string {
 	sb := strings.Builder{}
 
