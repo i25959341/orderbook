@@ -197,6 +197,52 @@ func TestOrderBookJSON(t *testing.T) {
 	}
 }
 
+func TestPriceCalculation(t *testing.T) {
+	ob := NewOrderBook()
+	addDepth(ob, "05-", decimal.New(10, 0))
+	addDepth(ob, "10-", decimal.New(10, 0))
+	addDepth(ob, "15-", decimal.New(10, 0))
+	t.Log(ob)
+
+	price, err := ob.CalculateMarketPrice(Buy, decimal.New(115, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !price.Equal(decimal.New(13150, 0)) {
+		t.Fatal("invalid price", price)
+	}
+
+	price, err = ob.CalculateMarketPrice(Buy, decimal.New(200, 0))
+	if err == nil {
+		t.Fatal("invalid quantity count")
+	}
+
+	if !price.Equal(decimal.New(18000, 0)) {
+		t.Fatal("invalid price", price)
+	}
+
+	// -------
+
+	price, err = ob.CalculateMarketPrice(Sell, decimal.New(115, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !price.Equal(decimal.New(8700, 0)) {
+		t.Fatal("invalid price", price)
+	}
+
+	price, err = ob.CalculateMarketPrice(Sell, decimal.New(200, 0))
+	if err == nil {
+		t.Fatal("invalid quantity count")
+	}
+
+	if !price.Equal(decimal.New(10500, 0)) {
+		t.Fatal("invalid price", price)
+	}
+}
+
 func BenchmarkLimitOrder(b *testing.B) {
 	ob := NewOrderBook()
 	stopwatch := time.Now()
