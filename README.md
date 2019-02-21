@@ -9,6 +9,7 @@ Improved matching engine written in Go (Golang)
 - Supports order cancelling
 - High performance (above 300k trades per second)
 - Optimal memory usage
+- JSON Marshalling and Unmarsalling
 
 ## Usage
 
