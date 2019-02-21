@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	rbtx "github.com/emirpasic/gods/examples/redblacktreeextended"
@@ -167,33 +166,10 @@ func (os *OrderSide) Orders() (orders []*list.Element) {
 func (os *OrderSide) String() string {
 	sb := strings.Builder{}
 
-	prices := []decimal.Decimal{}
-	for k := range os.prices {
-		num, _ := decimal.NewFromString(k)
-		prices = append(prices, num)
-	}
-
-	sort.Slice(prices, func(i, j int) bool {
-		return prices[i].GreaterThan(prices[j])
-	})
-
-	var (
-		strPrices   []string
-		maxLen      int
-		strPrice    string
-		strPriceLen int
-	)
-	for _, price := range prices {
-		strPrice = price.String()
-		strPriceLen = len(strPrice)
-		if strPriceLen > maxLen {
-			maxLen = strPriceLen
-		}
-		strPrices = append(strPrices, price.String())
-	}
-
-	for _, price := range strPrices {
-		sb.WriteString(fmt.Sprintf("\n%s -> %s", strings.Repeat(" ", maxLen-len(price))+price, os.prices[price].Volume()))
+	level := os.MaxPriceQueue()
+	for level != nil {
+		sb.WriteString(fmt.Sprintf("\n%s -> %s", level.Price(), level.Volume()))
+		level = os.LessThan(level.Price())
 	}
 
 	return sb.String()
