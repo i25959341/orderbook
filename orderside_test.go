@@ -95,6 +95,38 @@ func TestOrderSideJSON(t *testing.T) {
 	}
 }
 
+func TestPriceFinding(t *testing.T) {
+	os := NewOrderSide()
+
+	os.Append(NewOrder("five", Sell, decimal.New(5, 0), decimal.New(130, 0), time.Now().UTC()))
+	os.Append(NewOrder("one", Sell, decimal.New(5, 0), decimal.New(170, 0), time.Now().UTC()))
+	os.Append(NewOrder("eight", Sell, decimal.New(5, 0), decimal.New(100, 0), time.Now().UTC()))
+	os.Append(NewOrder("two", Sell, decimal.New(5, 0), decimal.New(160, 0), time.Now().UTC()))
+	os.Append(NewOrder("four", Sell, decimal.New(5, 0), decimal.New(140, 0), time.Now().UTC()))
+	os.Append(NewOrder("six", Sell, decimal.New(5, 0), decimal.New(120, 0), time.Now().UTC()))
+	os.Append(NewOrder("three", Sell, decimal.New(5, 0), decimal.New(150, 0), time.Now().UTC()))
+	os.Append(NewOrder("seven", Sell, decimal.New(5, 0), decimal.New(110, 0), time.Now().UTC()))
+
+	if !os.Volume().Equals(decimal.New(40, 0)) {
+		t.Fatal("invalid volume")
+	}
+
+	if !os.LessThan(decimal.New(101, 0)).Price().Equals(decimal.New(100, 0)) ||
+		!os.LessThan(decimal.New(150, 0)).Price().Equals(decimal.New(140, 0)) ||
+		os.LessThan(decimal.New(100, 0)) != nil {
+		t.Fatal("LessThan return invalid price")
+	}
+
+	if !os.GreaterThan(decimal.New(169, 0)).Price().Equals(decimal.New(170, 0)) ||
+		!os.GreaterThan(decimal.New(150, 0)).Price().Equals(decimal.New(160, 0)) ||
+		os.GreaterThan(decimal.New(170, 0)) != nil {
+		t.Fatal("GreaterThan return invalid price")
+	}
+
+	t.Log(os.LessThan(decimal.New(101, 0)))
+	t.Log(os.GreaterThan(decimal.New(169, 0)))
+}
+
 func BenchmarkOrderSide(b *testing.B) {
 	ot := NewOrderSide()
 	stopwatch := time.Now()

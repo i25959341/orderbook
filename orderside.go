@@ -17,6 +17,7 @@ type OrderSide struct {
 	priceTree *rbtx.RedBlackTreeExtended
 	prices    map[string]*OrderQueue
 
+	volume    decimal.Decimal
 	numOrders int
 	depth     int
 }
@@ -32,6 +33,7 @@ func NewOrderSide() *OrderSide {
 			Tree: rbt.NewWith(rbtComparator),
 		},
 		prices: map[string]*OrderQueue{},
+		volume: decimal.Zero,
 	}
 }
 
@@ -43,6 +45,11 @@ func (os *OrderSide) Len() int {
 // Depth returns depth of market
 func (os *OrderSide) Depth() int {
 	return os.depth
+}
+
+// Volume returns total amount of quantity in side
+func (os *OrderSide) Volume() decimal.Decimal {
+	return os.volume
 }
 
 // Append appends order to definite price level
@@ -58,6 +65,7 @@ func (os *OrderSide) Append(o *Order) *list.Element {
 		os.depth++
 	}
 	os.numOrders++
+	os.volume = os.volume.Add(o.Quantity())
 	return priceQueue.Append(o)
 }
 
@@ -76,6 +84,7 @@ func (os *OrderSide) Remove(e *list.Element) *Order {
 	}
 
 	os.numOrders--
+	os.volume = os.volume.Sub(o.Quantity())
 	return o
 }
 
@@ -96,6 +105,50 @@ func (os *OrderSide) MinPriceQueue() *OrderQueue {
 			return value.(*OrderQueue)
 		}
 	}
+	return nil
+}
+
+// LessThan returns nearest OrderQueue with price less than given
+func (os *OrderSide) LessThan(price decimal.Decimal) *OrderQueue {
+	tree := os.priceTree.Tree
+	node := tree.Root
+
+	var floor *rbt.Node
+	for node != nil {
+		if tree.Comparator(price, node.Key) > 0 {
+			floor = node
+			node = node.Right
+		} else {
+			node = node.Left
+		}
+	}
+
+	if floor != nil {
+		return floor.Value.(*OrderQueue)
+	}
+
+	return nil
+}
+
+// GreaterThan returns nearest OrderQueue with price greater than given
+func (os *OrderSide) GreaterThan(price decimal.Decimal) *OrderQueue {
+	tree := os.priceTree.Tree
+	node := tree.Root
+
+	var ceiling *rbt.Node
+	for node != nil {
+		if tree.Comparator(price, node.Key) < 0 {
+			ceiling = node
+			node = node.Left
+		} else {
+			node = node.Right
+		}
+	}
+
+	if ceiling != nil {
+		return ceiling.Value.(*OrderQueue)
+	}
+
 	return nil
 }
 
