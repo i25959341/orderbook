@@ -1,6 +1,7 @@
 package orderbook
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -74,6 +75,30 @@ func TestOrderQueue(t *testing.T) {
 	}
 
 	t.Log(oq)
+}
+
+func TestOrderQueueJSON(t *testing.T) {
+	data := NewOrderQueue(decimal.New(111, 0))
+
+	data.Append(NewOrder("one", Buy, decimal.New(11, -1), decimal.New(11, 1), time.Now().UTC()))
+	data.Append(NewOrder("two", Buy, decimal.New(22, -1), decimal.New(22, 1), time.Now().UTC()))
+	data.Append(NewOrder("three", Sell, decimal.New(33, -1), decimal.New(33, 1), time.Now().UTC()))
+	data.Append(NewOrder("four", Sell, decimal.New(44, -1), decimal.New(44, 1), time.Now().UTC()))
+
+	result, _ := json.Marshal(data)
+	t.Log(string(result))
+
+	data = NewOrderQueue(decimal.Zero)
+	if err := json.Unmarshal(result, data); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(data)
+
+	err := json.Unmarshal([]byte(`[{"side":"fake"}]`), &data)
+	if err == nil {
+		t.Fatal("can unmarshal unsupported value")
+	}
 }
 
 func BenchmarkOrderQueue(b *testing.B) {

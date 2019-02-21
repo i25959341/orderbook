@@ -1,6 +1,7 @@
 package orderbook
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -164,6 +165,36 @@ func TestMarketProcess(t *testing.T) {
 
 	t.Log("Done", done)
 	t.Log(ob)
+}
+
+func TestOrderBookJSON(t *testing.T) {
+	data := NewOrderBook()
+
+	result, _ := json.Marshal(data)
+	t.Log(string(result))
+
+	if err := json.Unmarshal(result, data); err != nil {
+		t.Fatal(err)
+	}
+
+	addDepth(data, "01-", decimal.New(10, 0))
+	addDepth(data, "02-", decimal.New(1, 0))
+	addDepth(data, "03-", decimal.New(2, 0))
+
+	result, _ = json.Marshal(data)
+	t.Log(string(result))
+
+	data = NewOrderBook()
+	if err := json.Unmarshal(result, data); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(data)
+
+	err := json.Unmarshal([]byte(`[{"side":"fake"}]`), &data)
+	if err == nil {
+		t.Fatal("can unmarshal unsupported value")
+	}
 }
 
 func BenchmarkLimitOrder(b *testing.B) {

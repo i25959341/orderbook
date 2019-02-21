@@ -2,6 +2,7 @@ package orderbook
 
 import (
 	"container/list"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -80,4 +81,46 @@ func (oq *OrderQueue) String() string {
 		iter = iter.Next()
 	}
 	return sb.String()
+}
+
+func (oq *OrderQueue) MarshalJSON() ([]byte, error) {
+	iter := oq.Head()
+
+	var orders []*Order
+	for iter != nil {
+		orders = append(orders, iter.Value.(*Order))
+		iter = iter.Next()
+	}
+
+	return json.Marshal(
+		&struct {
+			Volume decimal.Decimal `json:"volume"`
+			Price  decimal.Decimal `json:"price"`
+			Orders []*Order        `json:"orders"`
+		}{
+			Volume: oq.Volume(),
+			Price:  oq.Price(),
+			Orders: orders,
+		},
+	)
+}
+
+func (oq *OrderQueue) UnmarshalJSON(data []byte) error {
+	obj := struct {
+		Volume decimal.Decimal `json:"volume"`
+		Price  decimal.Decimal `json:"price"`
+		Orders []*Order        `json:"orders"`
+	}{}
+
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+
+	oq.volume = obj.Volume
+	oq.price = obj.Price
+	oq.orders = list.New()
+	for _, order := range obj.Orders {
+		oq.orders.PushBack(order)
+	}
+	return nil
 }

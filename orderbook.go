@@ -2,6 +2,7 @@ package orderbook
 
 import (
 	"container/list"
+	"encoding/json"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -165,4 +166,41 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 
 func (ob *OrderBook) String() string {
 	return ob.asks.String() + "\r\n------------------------------------" + ob.bids.String()
+}
+
+func (ob *OrderBook) MarshalJSON() ([]byte, error) {
+	return json.Marshal(
+		&struct {
+			Asks *OrderSide `json:"asks"`
+			Bids *OrderSide `json:"bids"`
+		}{
+			Asks: ob.asks,
+			Bids: ob.bids,
+		},
+	)
+}
+
+func (ob *OrderBook) UnmarshalJSON(data []byte) error {
+	obj := struct {
+		Asks *OrderSide `json:"asks"`
+		Bids *OrderSide `json:"bids"`
+	}{}
+
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+
+	ob.asks = obj.Asks
+	ob.bids = obj.Bids
+	ob.orders = map[string]*list.Element{}
+
+	for _, order := range ob.asks.Orders() {
+		ob.orders[order.Value.(*Order).ID()] = order
+	}
+
+	for _, order := range ob.bids.Orders() {
+		ob.orders[order.Value.(*Order).ID()] = order
+	}
+
+	return nil
 }
