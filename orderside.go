@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	rbtx "github.com/emirpasic/gods/examples/redblacktreeextended"
@@ -17,6 +16,7 @@ type OrderSide struct {
 	priceTree *rbtx.RedBlackTreeExtended
 	prices    map[string]*OrderQueue
 
+	volume    decimal.Decimal
 	numOrders int
 	depth     int
 }
@@ -32,6 +32,7 @@ func NewOrderSide() *OrderSide {
 			Tree: rbt.NewWith(rbtComparator),
 		},
 		prices: map[string]*OrderQueue{},
+		volume: decimal.Zero,
 	}
 }
 
@@ -43,6 +44,11 @@ func (os *OrderSide) Len() int {
 // Depth returns depth of market
 func (os *OrderSide) Depth() int {
 	return os.depth
+}
+
+// Volume returns total amount of quantity in side
+func (os *OrderSide) Volume() decimal.Decimal {
+	return os.volume
 }
 
 // Append appends order to definite price level
@@ -58,6 +64,7 @@ func (os *OrderSide) Append(o *Order) *list.Element {
 		os.depth++
 	}
 	os.numOrders++
+	os.volume = os.volume.Add(o.Quantity())
 	return priceQueue.Append(o)
 }
 
@@ -76,6 +83,7 @@ func (os *OrderSide) Remove(e *list.Element) *Order {
 	}
 
 	os.numOrders--
+	os.volume = os.volume.Sub(o.Quantity())
 	return o
 }
 
@@ -99,6 +107,50 @@ func (os *OrderSide) MinPriceQueue() *OrderQueue {
 	return nil
 }
 
+// LessThan returns nearest OrderQueue with price less than given
+func (os *OrderSide) LessThan(price decimal.Decimal) *OrderQueue {
+	tree := os.priceTree.Tree
+	node := tree.Root
+
+	var floor *rbt.Node
+	for node != nil {
+		if tree.Comparator(price, node.Key) > 0 {
+			floor = node
+			node = node.Right
+		} else {
+			node = node.Left
+		}
+	}
+
+	if floor != nil {
+		return floor.Value.(*OrderQueue)
+	}
+
+	return nil
+}
+
+// GreaterThan returns nearest OrderQueue with price greater than given
+func (os *OrderSide) GreaterThan(price decimal.Decimal) *OrderQueue {
+	tree := os.priceTree.Tree
+	node := tree.Root
+
+	var ceiling *rbt.Node
+	for node != nil {
+		if tree.Comparator(price, node.Key) < 0 {
+			ceiling = node
+			node = node.Left
+		} else {
+			node = node.Right
+		}
+	}
+
+	if ceiling != nil {
+		return ceiling.Value.(*OrderQueue)
+	}
+
+	return nil
+}
+
 // Orders returns all of *list.Element orders
 func (os *OrderSide) Orders() (orders []*list.Element) {
 	for _, price := range os.prices {
@@ -114,33 +166,10 @@ func (os *OrderSide) Orders() (orders []*list.Element) {
 func (os *OrderSide) String() string {
 	sb := strings.Builder{}
 
-	prices := []decimal.Decimal{}
-	for k := range os.prices {
-		num, _ := decimal.NewFromString(k)
-		prices = append(prices, num)
-	}
-
-	sort.Slice(prices, func(i, j int) bool {
-		return prices[i].GreaterThan(prices[j])
-	})
-
-	var (
-		strPrices   []string
-		maxLen      int
-		strPrice    string
-		strPriceLen int
-	)
-	for _, price := range prices {
-		strPrice = price.String()
-		strPriceLen = len(strPrice)
-		if strPriceLen > maxLen {
-			maxLen = strPriceLen
-		}
-		strPrices = append(strPrices, price.String())
-	}
-
-	for _, price := range strPrices {
-		sb.WriteString(fmt.Sprintf("\n%s -> %s", strings.Repeat(" ", maxLen-len(price))+price, os.prices[price].Volume()))
+	level := os.MaxPriceQueue()
+	for level != nil {
+		sb.WriteString(fmt.Sprintf("\n%s -> %s", level.Price(), level.Volume()))
+		level = os.LessThan(level.Price())
 	}
 
 	return sb.String()

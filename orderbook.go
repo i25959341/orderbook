@@ -42,22 +42,25 @@ func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 		return nil, nil, decimal.Zero, ErrInvalidQuantity
 	}
 
+	var (
+		iter          func() *OrderQueue
+		sideToProcess *OrderSide
+	)
+
 	if side == Buy {
-		for quantity.Sign() > 0 && ob.asks.Len() > 0 {
-			bestPriceAsks := ob.asks.MinPriceQueue()
-			ordersDone, partialDone, quantityLeft := ob.processQueue(bestPriceAsks, quantity)
-			done = append(done, ordersDone...)
-			partial = partialDone
-			quantity = quantityLeft
-		}
+		iter = ob.asks.MinPriceQueue
+		sideToProcess = ob.asks
 	} else {
-		for quantity.Sign() > 0 && ob.bids.Len() > 0 {
-			bestPriceBids := ob.bids.MaxPriceQueue()
-			ordersDone, partialDone, quantityLeft := ob.processQueue(bestPriceBids, quantity)
-			done = append(done, ordersDone...)
-			partial = partialDone
-			quantity = quantityLeft
-		}
+		iter = ob.bids.MaxPriceQueue
+		sideToProcess = ob.bids
+	}
+
+	for quantity.Sign() > 0 && sideToProcess.Len() > 0 {
+		bestPrice := iter()
+		ordersDone, partialDone, quantityLeft := ob.processQueue(bestPrice, quantity)
+		done = append(done, ordersDone...)
+		partial = partialDone
+		quantity = quantityLeft
 	}
 
 	quantityLeft = quantity
@@ -93,27 +96,32 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 	}
 
 	quantityToTrade := quantity
-	var sideToAdd *OrderSide
+	var (
+		sideToProcess *OrderSide
+		sideToAdd     *OrderSide
+		comparator    func(decimal.Decimal) bool
+		iter          func() *OrderQueue
+	)
+
 	if side == Buy {
 		sideToAdd = ob.bids
-		minPrice := ob.asks.MinPriceQueue()
-		for quantityToTrade.Sign() > 0 && ob.asks.Len() > 0 && price.GreaterThanOrEqual(minPrice.Price()) {
-			ordersDone, partialDone, quantityLeft := ob.processQueue(minPrice, quantityToTrade)
-			done = append(done, ordersDone...)
-			partial = partialDone
-			quantityToTrade = quantityLeft
-			minPrice = ob.asks.MinPriceQueue()
-		}
+		sideToProcess = ob.asks
+		comparator = price.GreaterThanOrEqual
+		iter = ob.asks.MinPriceQueue
 	} else {
 		sideToAdd = ob.asks
-		maxPrice := ob.bids.MaxPriceQueue()
-		for quantityToTrade.Sign() > 0 && ob.bids.Len() > 0 && price.LessThanOrEqual(maxPrice.Price()) {
-			ordersDone, partialDone, quantityLeft := ob.processQueue(maxPrice, quantityToTrade)
-			done = append(done, ordersDone...)
-			partial = partialDone
-			quantityToTrade = quantityLeft
-			maxPrice = ob.bids.MaxPriceQueue()
-		}
+		sideToProcess = ob.bids
+		comparator = price.LessThanOrEqual
+		iter = ob.bids.MaxPriceQueue
+	}
+
+	bestPrice := iter()
+	for quantityToTrade.Sign() > 0 && sideToProcess.Len() > 0 && comparator(bestPrice.Price()) {
+		ordersDone, partialDone, quantityLeft := ob.processQueue(bestPrice, quantityToTrade)
+		done = append(done, ordersDone...)
+		partial = partialDone
+		quantityToTrade = quantityLeft
+		bestPrice = iter()
 	}
 
 	if quantityToTrade.Sign() > 0 {
@@ -162,6 +170,44 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	}
 
 	return ob.asks.Remove(e)
+}
+
+// CalculateMarketPrice returns total market price for requested quantity
+// if err is not nil price returns total price of all levels in side
+func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (price decimal.Decimal, err error) {
+	price = decimal.Zero
+
+	var (
+		level *OrderQueue
+		iter  func(decimal.Decimal) *OrderQueue
+	)
+
+	if side == Buy {
+		level = ob.asks.MinPriceQueue()
+		iter = ob.asks.GreaterThan
+	} else {
+		level = ob.bids.MaxPriceQueue()
+		iter = ob.bids.LessThan
+	}
+
+	for quantity.Sign() > 0 && level != nil {
+		levelVolume := level.Volume()
+		levelPrice := level.Price()
+		if quantity.GreaterThanOrEqual(levelVolume) {
+			price = price.Add(levelPrice.Mul(levelVolume))
+			quantity = quantity.Sub(levelVolume)
+			level = iter(levelPrice)
+		} else {
+			price = price.Add(levelPrice.Mul(quantity))
+			quantity = decimal.Zero
+		}
+	}
+
+	if quantity.Sign() > 0 {
+		err = ErrInsufficientQuantity
+	}
+
+	return
 }
 
 func (ob *OrderBook) String() string {
