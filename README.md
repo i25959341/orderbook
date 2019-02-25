@@ -1,9 +1,11 @@
-[![gocover.run](https://gocover.run/github.com/i25959341/orderbook.svg?style=flat&tag=1.10)](https://gocover.run?tag=1.10&repo=github.com%2Fi25959341%2Forderbook)
-
-
 # Go orderbook
 
 Improved matching engine written in Go (Golang)
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/i25959341/orderbook)](https://goreportcard.com/report/github.com/i25959341/orderbook)
+[![GoDoc](https://godoc.org/github.com/i25959341/orderbook?status.svg)](https://godoc.org/github.com/i25959341/orderbook)
+[![gocover.run](https://gocover.run/github.com/i25959341/orderbook.svg?style=flat&tag=1.10)](https://gocover.run?tag=1.10&repo=github.com%2Fi25959341%2Forderbook)
+[![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
 
 ## Features
 
