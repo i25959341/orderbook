@@ -1,3 +1,6 @@
+[![gocover.run](https://gocover.run/github.com/i25959341/orderbook.svg?style=flat&tag=1.10)](https://gocover.run?tag=1.10&repo=github.com%2Fi25959341%2Forderbook)
+
+
 # Go orderbook
 
 Improved matching engine written in Go (Golang)
