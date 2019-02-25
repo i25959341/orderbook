@@ -33,7 +33,7 @@ func NewOrderBook() *OrderBook {
 //        read more at https://github.com/shopspring/decimal
 // Return:
 //      error        - not nil if price is less or equal 0
-//      done         - not nil if your market order produse ends of anoter orders, this order will add to
+//      done         - not nil if your market order produces ends of anoter orders, this order will add to
 //                     the "done" slice
 //      partial      - not nil if your order has done but top order is not fully done
 //      quantityLeft - more than zero if it is not enought orders to process all quantity
@@ -77,7 +77,7 @@ func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 //        read more at https://github.com/shopspring/decimal
 // Return:
 //      error   - not nil if quantity (or price) is less or equal 0. Or if order with given ID is exists
-//      done    - not nil if your order produse ends of anoter order, this order will add to
+//      done    - not nil if your order produces ends of anoter order, this order will add to
 //                the "done" slice. If your order have done too, it will be places to this array too
 //      partial - not nil if your order has done but top order is not fully done. Or if your order is
 //                partial done and placed to the orderbook without full quantity - partial will contain
@@ -210,10 +210,12 @@ func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (
 	return
 }
 
+// String implements fmt.Stringer interface
 func (ob *OrderBook) String() string {
 	return ob.asks.String() + "\r\n------------------------------------" + ob.bids.String()
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (ob *OrderBook) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		&struct {
@@ -226,6 +228,7 @@ func (ob *OrderBook) MarshalJSON() ([]byte, error) {
 	)
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
 func (ob *OrderBook) UnmarshalJSON(data []byte) error {
 	obj := struct {
 		Asks *OrderSide `json:"asks"`

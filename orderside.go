@@ -163,6 +163,7 @@ func (os *OrderSide) Orders() (orders []*list.Element) {
 	return
 }
 
+// String implements fmt.Stringer interface
 func (os *OrderSide) String() string {
 	sb := strings.Builder{}
 
@@ -175,6 +176,7 @@ func (os *OrderSide) String() string {
 	return sb.String()
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (os *OrderSide) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		&struct {
@@ -189,6 +191,7 @@ func (os *OrderSide) MarshalJSON() ([]byte, error) {
 	)
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
 func (os *OrderSide) UnmarshalJSON(data []byte) error {
 	obj := struct {
 		NumOrders int                    `json:"numOrders"`

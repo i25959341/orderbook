@@ -14,6 +14,7 @@ const (
 	Buy
 )
 
+// String implements fmt.Stringer interface
 func (s Side) String() string {
 	if s == Buy {
 		return "buy"
@@ -22,10 +23,12 @@ func (s Side) String() string {
 	return "sell"
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (s Side) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + s.String() + `"`), nil
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
 func (s *Side) UnmarshalJSON(data []byte) error {
 	switch string(data) {
 	case `"buy"`:

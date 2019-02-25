@@ -70,6 +70,7 @@ func (oq *OrderQueue) Remove(e *list.Element) *Order {
 	return oq.orders.Remove(e).(*Order)
 }
 
+// String implements fmt.Stringer interface
 func (oq *OrderQueue) String() string {
 	sb := strings.Builder{}
 	iter := oq.orders.Front()
@@ -83,6 +84,7 @@ func (oq *OrderQueue) String() string {
 	return sb.String()
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (oq *OrderQueue) MarshalJSON() ([]byte, error) {
 	iter := oq.Head()
 
@@ -105,6 +107,7 @@ func (oq *OrderQueue) MarshalJSON() ([]byte, error) {
 	)
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
 func (oq *OrderQueue) UnmarshalJSON(data []byte) error {
 	obj := struct {
 		Volume decimal.Decimal `json:"volume"`
