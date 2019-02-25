@@ -13,6 +13,8 @@ included in the changelog document.
 
 - Added in travisci and GolangCI linter
 - Fix vet warnings
+- Added json.Marshaler and json.Unmarshaler interfaces
+- Added total market price calculation for definite quantity (CalculateMarketPrice)
 
 ## [0.0.1] - 2019-02-17
 
