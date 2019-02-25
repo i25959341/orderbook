@@ -53,10 +53,12 @@ func (o *Order) Time() time.Time {
 	return o.timestamp
 }
 
+// String implements Stringer interface
 func (o *Order) String() string {
 	return fmt.Sprintf("\n\"%s\":\n\tside: %s\n\tquantity: %s\n\tprice: %s\n\ttime: %s\n", o.ID(), o.Side(), o.Quantity(), o.Price(), o.Time())
 }
 
+// MarshalJSON implements json.Marshaler interface
 func (o *Order) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		&struct {
@@ -75,6 +77,7 @@ func (o *Order) MarshalJSON() ([]byte, error) {
 	)
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
 func (o *Order) UnmarshalJSON(data []byte) error {
 	obj := struct {
 		S         Side            `json:"side"`
