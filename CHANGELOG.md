@@ -9,7 +9,7 @@ service runtime.
 For instance, fixing the documentation and lintin SHOULD not be
 included in the changelog document.
 
-## [Unreleased] 
+## [0.1.0] - 2019-03-01
 
 - Added in travisci and GolangCI linter
 - Fix vet warnings
