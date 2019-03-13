@@ -25,27 +25,33 @@ func TestLimitPlace(t *testing.T) {
 	ob := NewOrderBook()
 	quantity := decimal.New(2, 0)
 	for i := 50; i < 100; i = i + 10 {
-		done, partial, err := ob.ProcessLimitOrder(Buy, fmt.Sprintf("buy-%d", i), quantity, decimal.New(int64(i), 0))
+		done, partial, partialQty, err := ob.ProcessLimitOrder(Buy, fmt.Sprintf("buy-%d", i), quantity, decimal.New(int64(i), 0))
 		if len(done) != 0 {
 			t.Fatal("OrderBook failed to process limit order (done is not empty)")
 		}
 		if partial != nil {
 			t.Fatal("OrderBook failed to process limit order (partial is not empty)")
 		}
-		if partial != nil {
+		if partialQty.Sign() != 0 {
+			t.Fatal("OrderBook failed to process limit order (partialQty is not zero)")
+		}
+		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	for i := 100; i < 150; i = i + 10 {
-		done, partial, err := ob.ProcessLimitOrder(Sell, fmt.Sprintf("sell-%d", i), quantity, decimal.New(int64(i), 0))
+		done, partial, partialQty, err := ob.ProcessLimitOrder(Sell, fmt.Sprintf("sell-%d", i), quantity, decimal.New(int64(i), 0))
 		if len(done) != 0 {
 			t.Fatal("OrderBook failed to process limit order (done is not empty)")
 		}
 		if partial != nil {
 			t.Fatal("OrderBook failed to process limit order (partial is not empty)")
 		}
-		if partial != nil {
+		if partialQty.Sign() != 0 {
+			t.Fatal("OrderBook failed to process limit order (partialQty is not zero)")
+		}
+		if err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -58,7 +64,7 @@ func TestLimitProcess(t *testing.T) {
 	ob := NewOrderBook()
 	addDepth(ob, "", decimal.New(2, 0))
 
-	done, partial, err := ob.ProcessLimitOrder(Buy, "order-b100", decimal.New(1, 0), decimal.New(100, 0))
+	done, partial, partialQty, err := ob.ProcessLimitOrder(Buy, "order-b100", decimal.New(1, 0), decimal.New(100, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,9 +79,13 @@ func TestLimitProcess(t *testing.T) {
 		t.Fatal("Wrong partial id")
 	}
 
+	if !partialQty.Equal(decimal.New(1, 0)) {
+		t.Fatal("Wrong partial quantity processed")
+	}
+
 	t.Log(ob)
 
-	done, partial, err = ob.ProcessLimitOrder(Buy, "order-b150", decimal.New(10, 0), decimal.New(150, 0))
+	done, partial, partialQty, err = ob.ProcessLimitOrder(Buy, "order-b150", decimal.New(10, 0), decimal.New(150, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,17 +100,21 @@ func TestLimitProcess(t *testing.T) {
 		t.Fatal("Wrong partial id")
 	}
 
+	if !partialQty.Equal(decimal.New(9, 0)) {
+		t.Fatal("Wrong partial quantity processed", partialQty)
+	}
+
 	t.Log(ob)
 
-	if _, _, err := ob.ProcessLimitOrder(Sell, "buy-70", decimal.New(11, 0), decimal.New(40, 0)); err == nil {
+	if _, _, _, err := ob.ProcessLimitOrder(Sell, "buy-70", decimal.New(11, 0), decimal.New(40, 0)); err == nil {
 		t.Fatal("Can add existing order")
 	}
 
-	if _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(0, 0), decimal.New(40, 0)); err == nil {
+	if _, _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(0, 0), decimal.New(40, 0)); err == nil {
 		t.Fatal("Can add empty quantity order")
 	}
 
-	if _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(10, 0), decimal.New(0, 0)); err == nil {
+	if _, _, _, err := ob.ProcessLimitOrder(Sell, "fake-70", decimal.New(10, 0), decimal.New(0, 0)); err == nil {
 		t.Fatal("Can add zero price")
 	}
 
@@ -108,7 +122,7 @@ func TestLimitProcess(t *testing.T) {
 		t.Fatal("Can cancel done order")
 	}
 
-	done, partial, err = ob.ProcessLimitOrder(Sell, "order-s40", decimal.New(11, 0), decimal.New(40, 0))
+	done, partial, partialQty, err = ob.ProcessLimitOrder(Sell, "order-s40", decimal.New(11, 0), decimal.New(40, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,6 +136,10 @@ func TestLimitProcess(t *testing.T) {
 		t.Fatal("Wrong partial")
 	}
 
+	if partialQty.Sign() != 0 {
+		t.Fatal("Wrong partialQty")
+	}
+
 	t.Log(ob)
 }
 
@@ -129,7 +147,7 @@ func TestMarketProcess(t *testing.T) {
 	ob := NewOrderBook()
 	addDepth(ob, "", decimal.New(2, 0))
 
-	done, partial, left, err := ob.ProcessMarketOrder(Buy, decimal.New(3, 0))
+	done, partial, partialQty, left, err := ob.ProcessMarketOrder(Buy, decimal.New(3, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,21 +156,29 @@ func TestMarketProcess(t *testing.T) {
 		t.Fatal("Wrong quantity left")
 	}
 
+	if !partialQty.Equal(decimal.New(1, 0)) {
+		t.Fatal("Wrong partial quantity left")
+	}
+
 	t.Log("Done", done)
 	t.Log("Partial", partial)
 	t.Log(ob)
 
-	if _, _, _, err := ob.ProcessMarketOrder(Buy, decimal.New(0, 0)); err == nil {
+	if _, _, _, _, err := ob.ProcessMarketOrder(Buy, decimal.New(0, 0)); err == nil {
 		t.Fatal("Can add zero quantity order")
 	}
 
-	done, partial, left, err = ob.ProcessMarketOrder(Sell, decimal.New(12, 0))
+	done, partial, partialQty, left, err = ob.ProcessMarketOrder(Sell, decimal.New(12, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if partial != nil {
 		t.Fatal("Partial is not nil")
+	}
+
+	if partialQty.Sign() != 0 {
+		t.Fatal("PartialQty is not nil")
 	}
 
 	if len(done) != 5 {
