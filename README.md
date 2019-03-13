@@ -62,11 +62,12 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order { ... }
 //        read more at https://github.com/shopspring/decimal
 // Return:
 //      error   - not nil if quantity (or price) is less or equal 0. Or if order with given ID is exists
-//      done    - not nil if your order produse ends of anoter order, this order will add to
+//      done    - not nil if your order produces ends of anoter order, this order will add to
 //                the "done" slice. If your order have done too, it will be places to this array too
 //      partial - not nil if your order has done but top order is not fully done. Or if your order is
 //                partial done and placed to the orderbook without full quantity - partial will contain
-//                your order with quantity to left 
+//                your order with quantity to left
+//      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
 func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, err error) { ... }
 ```
 
@@ -125,9 +126,10 @@ partial - 1 order with price 110
 //        read more at https://github.com/shopspring/decimal
 // Return:
 //      error        - not nil if price is less or equal 0
-//      done         - not nil if your market order produse ends of anoter orders, this order will add to
+//      done         - not nil if your market order produces ends of anoter orders, this order will add to
 //                     the "done" slice
 //      partial      - not nil if your order has done but top order is not fully done
+//      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
 //      quantityLeft - more than zero if it is not enought orders to process all quantity
 func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal, err error) { .. }
 ```
