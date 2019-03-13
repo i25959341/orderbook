@@ -9,6 +9,10 @@ service runtime.
 For instance, fixing the documentation and lintin SHOULD not be
 included in the changelog document.
 
+## [0.2.0] - 2019-03-13
+
+- Added parial quantity processed return value to Market and Limit orders
+
 ## [0.1.0] - 2019-03-01
 
 - Added in travisci and GolangCI linter
