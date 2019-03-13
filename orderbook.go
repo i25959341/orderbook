@@ -36,10 +36,11 @@ func NewOrderBook() *OrderBook {
 //      done         - not nil if your market order produces ends of anoter orders, this order will add to
 //                     the "done" slice
 //      partial      - not nil if your order has done but top order is not fully done
+//      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
 //      quantityLeft - more than zero if it is not enought orders to process all quantity
-func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal, err error) {
+func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, partialQuantityProcessed, quantityLeft decimal.Decimal, err error) {
 	if quantity.Sign() <= 0 {
-		return nil, nil, decimal.Zero, ErrInvalidQuantity
+		return nil, nil, decimal.Zero, decimal.Zero, ErrInvalidQuantity
 	}
 
 	var (
@@ -57,9 +58,10 @@ func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 
 	for quantity.Sign() > 0 && sideToProcess.Len() > 0 {
 		bestPrice := iter()
-		ordersDone, partialDone, quantityLeft := ob.processQueue(bestPrice, quantity)
+		ordersDone, partialDone, partialProcessed, quantityLeft := ob.processQueue(bestPrice, quantity)
 		done = append(done, ordersDone...)
 		partial = partialDone
+		partialQuantityProcessed = partialProcessed
 		quantity = quantityLeft
 	}
 
@@ -82,17 +84,18 @@ func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (do
 //      partial - not nil if your order has done but top order is not fully done. Or if your order is
 //                partial done and placed to the orderbook without full quantity - partial will contain
 //                your order with quantity to left
-func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, err error) {
+//      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
+func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, price decimal.Decimal) (done []*Order, partial *Order, partialQuantityProcessed decimal.Decimal, err error) {
 	if _, ok := ob.orders[orderID]; ok {
-		return nil, nil, ErrOrderExists
+		return nil, nil, decimal.Zero, ErrOrderExists
 	}
 
 	if quantity.Sign() <= 0 {
-		return nil, nil, ErrInvalidQuantity
+		return nil, nil, decimal.Zero, ErrInvalidQuantity
 	}
 
 	if price.Sign() <= 0 {
-		return nil, nil, ErrInvalidPrice
+		return nil, nil, decimal.Zero, ErrInvalidPrice
 	}
 
 	quantityToTrade := quantity
@@ -117,9 +120,10 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 
 	bestPrice := iter()
 	for quantityToTrade.Sign() > 0 && sideToProcess.Len() > 0 && comparator(bestPrice.Price()) {
-		ordersDone, partialDone, quantityLeft := ob.processQueue(bestPrice, quantityToTrade)
+		ordersDone, partialDone, partialQty, quantityLeft := ob.processQueue(bestPrice, quantityToTrade)
 		done = append(done, ordersDone...)
 		partial = partialDone
+		partialQuantityProcessed = partialQty
 		quantityToTrade = quantityLeft
 		bestPrice = iter()
 	}
@@ -127,6 +131,7 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 	if quantityToTrade.Sign() > 0 {
 		o := NewOrder(orderID, side, quantityToTrade, price, time.Now().UTC())
 		if len(done) > 0 {
+			partialQuantityProcessed = quantity.Sub(quantityToTrade)
 			partial = o
 		}
 		ob.orders[orderID] = sideToAdd.Append(o)
@@ -136,7 +141,7 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 	return
 }
 
-func (ob *OrderBook) processQueue(orderQueue *OrderQueue, quantityToTrade decimal.Decimal) (done []*Order, partial *Order, quantityLeft decimal.Decimal) {
+func (ob *OrderBook) processQueue(orderQueue *OrderQueue, quantityToTrade decimal.Decimal) (done []*Order, partial *Order, partialQuantityProcessed, quantityLeft decimal.Decimal) {
 	quantityLeft = quantityToTrade
 
 	for orderQueue.Len() > 0 && quantityLeft.Sign() > 0 {
@@ -145,6 +150,7 @@ func (ob *OrderBook) processQueue(orderQueue *OrderQueue, quantityToTrade decima
 
 		if quantityLeft.LessThan(headOrder.Quantity()) {
 			partial = NewOrder(headOrder.ID(), headOrder.Side(), headOrder.Quantity().Sub(quantityLeft), headOrder.Price(), headOrder.Time())
+			partialQuantityProcessed = quantityLeft
 			orderQueue.Update(headOrderEl, partial)
 			quantityLeft = decimal.Zero
 		} else {
