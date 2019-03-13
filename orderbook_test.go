@@ -57,6 +57,7 @@ func TestLimitPlace(t *testing.T) {
 	}
 
 	t.Log(ob)
+	t.Log(ob.Depth())
 	return
 }
 
