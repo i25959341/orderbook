@@ -57,6 +57,16 @@ func TestLimitPlace(t *testing.T) {
 	}
 
 	t.Log(ob)
+
+	if ob.Order("fake") != nil {
+		t.Fatal("can get fake order")
+	}
+
+	if ob.Order("sell-100") == nil {
+		t.Fatal("can't get real order")
+	}
+
+	t.Log(ob.Depth())
 	return
 }
 

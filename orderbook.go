@@ -25,6 +25,12 @@ func NewOrderBook() *OrderBook {
 	}
 }
 
+// PriceLevel contains price and volume in depth
+type PriceLevel struct {
+	Price    decimal.Decimal `json:"price"`
+	Quantity decimal.Decimal `json:"quantity"`
+}
+
 // ProcessMarketOrder immediately gets definite quantity from the order book with market price
 // Arguments:
 //      side     - what do you want to do (ob.Sell or ob.Buy)
@@ -159,6 +165,38 @@ func (ob *OrderBook) processQueue(orderQueue *OrderQueue, quantityToTrade decima
 		}
 	}
 
+	return
+}
+
+// Order returns order by id
+func (ob *OrderBook) Order(orderID string) *Order {
+	e, ok := ob.orders[orderID]
+	if !ok {
+		return nil
+	}
+
+	return e.Value.(*Order)
+}
+
+// Depth returns price levels and volume at price level
+func (ob *OrderBook) Depth() (asks, bids []*PriceLevel) {
+	level := ob.asks.MaxPriceQueue()
+	for level != nil {
+		asks = append(asks, &PriceLevel{
+			Price:    level.Price(),
+			Quantity: level.Volume(),
+		})
+		level = ob.asks.LessThan(level.Price())
+	}
+
+	level = ob.bids.MaxPriceQueue()
+	for level != nil {
+		bids = append(bids, &PriceLevel{
+			Price:    level.Price(),
+			Quantity: level.Volume(),
+		})
+		level = ob.bids.LessThan(level.Price())
+	}
 	return
 }
 
