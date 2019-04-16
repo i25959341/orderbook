@@ -144,7 +144,7 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 	} else {
 		donePrice := price
 		if len(done) > 0 {
-			donePrice := decimal.Zero
+			donePrice = decimal.Zero
 			for _, order := range done {
 				donePrice = donePrice.Add(order.Price())
 			}
