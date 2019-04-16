@@ -142,15 +142,20 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 		}
 		ob.orders[orderID] = sideToAdd.Append(o)
 	} else {
-		donePrice := price
-		if len(done) > 0 {
-			donePrice = decimal.Zero
-			for _, order := range done {
-				donePrice = donePrice.Add(order.Price())
-			}
-			donePrice = donePrice.Div(decimal.New(int64(len(done)), 0))
+		totalQuantity := decimal.Zero
+		totalPrice := decimal.Zero
+
+		for _, order := range done {
+			totalQuantity = totalQuantity.Add(order.quantity)
+			totalPrice = totalPrice.Add(order.Price())
 		}
-		done = append(done, NewOrder(orderID, side, quantity, donePrice, time.Now().UTC()))
+
+		if partialQuantityProcessed.Sign() > 0 {
+			totalQuantity = totalQuantity.Add(partialQuantityProcessed)
+			totalPrice = totalPrice.Add(partial.Price().Mul(partialQuantityProcessed))
+		}
+
+		done = append(done, NewOrder(orderID, side, quantity, totalPrice.Div(totalQuantity), time.Now().UTC()))
 	}
 	return
 }
