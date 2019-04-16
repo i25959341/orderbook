@@ -9,7 +9,7 @@ service runtime.
 For instance, fixing the documentation and lintin SHOULD not be
 included in the changelog document.
 
-## [0.2.1] - 2019-03-13
+## [0.2.2] - 2019-03-13
 
 - Fix order done price for limit order
 
