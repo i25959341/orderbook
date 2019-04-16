@@ -11,6 +11,10 @@ included in the changelog document.
 
 ## [0.2.1] - 2019-03-13
 
+- Fix order done price for limit order
+
+## [0.2.1] - 2019-03-13
+
 - Added Depth method to get price levels for bids and asks
 - Added Order method to get Order object by ID
 
