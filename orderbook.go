@@ -146,8 +146,8 @@ func (ob *OrderBook) ProcessLimitOrder(side Side, orderID string, quantity, pric
 		totalPrice := decimal.Zero
 
 		for _, order := range done {
-			totalQuantity = totalQuantity.Add(order.quantity)
-			totalPrice = totalPrice.Add(order.Price())
+			totalQuantity = totalQuantity.Add(order.Quantity())
+			totalPrice = totalPrice.Add(order.Price().Mul(order.Quantity()))
 		}
 
 		if partialQuantityProcessed.Sign() > 0 {
