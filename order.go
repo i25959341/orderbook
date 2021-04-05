@@ -110,6 +110,6 @@ func (ob *OrderBook) GetOrderSide(side Side) *OrderSide {
 }
 
 // MarketOverview gives an overview of the market including the quantities and prices of each side in the market
-func (os *OrderSide) MarketOverview() {
-	// Todo
-}
+// func (os *OrderSide) MarketOverview() {
+// 	// Todo
+// }
