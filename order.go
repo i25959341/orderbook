@@ -136,7 +136,7 @@ func (ob *OrderBook) MarketOverview() *MarketView {
 
 // compileOrders compiles orders in the following format
 func compileOrders(orders []*list.Element) map[int]QueueTuple {
-
+	// show queue
 	queue := make(map[int]QueueTuple)
 
 	for i, o := range orders {
