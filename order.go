@@ -1,6 +1,7 @@
 package orderbook
 
 import (
+	"container/list"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -15,6 +16,18 @@ type Order struct {
 	timestamp time.Time
 	quantity  decimal.Decimal
 	price     decimal.Decimal
+}
+
+// MarketView represents order book in a glance
+type MarketView struct {
+	Asks map[int]QueueTuple `json:"asks"`
+	Bids map[int]QueueTuple `json:"bids"`
+}
+
+// QueueTuple queue tuple which represents
+type QueueTuple struct {
+	Depth decimal.Decimal `json:"depth"`
+	Price decimal.Decimal `json:"price"`
 }
 
 // NewOrder creates new constant object Order
@@ -110,6 +123,37 @@ func (ob *OrderBook) GetOrderSide(side Side) *OrderSide {
 }
 
 // MarketOverview gives an overview of the market including the quantities and prices of each side in the market
-// func (os *OrderSide) MarketOverview() {
-// 	// Todo
-// }
+// asks:   qty   price       bids:  qty   price
+//         0.2   14                 0.9   13
+//         0.1   14.5               5     14
+//         0.8   16                 2     16
+func (ob *OrderBook) MarketOverview() *MarketView {
+	return &MarketView{
+		Asks: compileOrders(ob.asks.Orders()),
+		Bids: compileOrders(ob.bids.Orders()),
+	}
+}
+
+// compileOrders compiles orders in the following format
+func compileOrders(orders []*list.Element) map[int]QueueTuple {
+
+	queue := make(map[int]QueueTuple)
+
+	for i, o := range orders {
+		if order, ok := o.Value.(*Order); ok {
+			if q, ok := queue[i]; ok {
+				q.Depth.Add(order.Quantity())
+				q.Price = order.Price()
+				queue[i] = q
+			} else {
+				queue[i] = QueueTuple{
+					Depth: order.Quantity(),
+					Price: order.Price(),
+				}
+			}
+
+		}
+	}
+
+	return queue
+}
