@@ -17,6 +17,12 @@ type Order struct {
 	price     decimal.Decimal
 }
 
+// MarketView represents order book in a glance
+type MarketView struct {
+	Asks map[string]decimal.Decimal `json:"asks"`
+	Bids map[string]decimal.Decimal `json:"bids"`
+}
+
 // NewOrder creates new constant object Order
 func NewOrder(orderID string, side Side, quantity, price decimal.Decimal, timestamp time.Time) *Order {
 	return &Order{
@@ -97,4 +103,49 @@ func (o *Order) UnmarshalJSON(data []byte) error {
 	o.quantity = obj.Quantity
 	o.price = obj.Price
 	return nil
+}
+
+// GetOrderSide gets the orderside along with its orders in one side of the market
+func (ob *OrderBook) GetOrderSide(side Side) *OrderSide {
+	switch side {
+	case Buy:
+		return ob.bids
+	default:
+		return ob.asks
+	}
+}
+
+// MarketOverview gives an overview of the market including the quantities and prices of each side in the market
+// asks:   qty   price       bids:  qty   price
+//         0.2   14                 0.9   13
+//         0.1   14.5               5     14
+//         0.8   16                 2     16
+func (ob *OrderBook) MarketOverview() *MarketView {
+
+	return &MarketView{
+		Asks: compileOrders(ob.asks),
+		Bids: compileOrders(ob.bids),
+	}
+}
+
+// compileOrders compiles orders in the following format
+func compileOrders(orders *OrderSide) map[string]decimal.Decimal {
+	// show queue
+	queue := make(map[string]decimal.Decimal)
+
+	if orders != nil {
+		level := orders.MaxPriceQueue()
+		for level != nil {
+			if q, exists := queue[level.Price().String()]; exists {
+				queue[level.Price().String()] = q.Add(level.Volume())
+			} else {
+				queue[level.Price().String()] = level.Volume()
+			}
+
+			level = orders.LessThan(level.Price())
+		}
+
+	}
+
+	return queue
 }
