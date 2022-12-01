@@ -44,8 +44,8 @@ type PriceLevel struct {
 //      partial      - not nil if your order has done but top order is not fully done
 //      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
 //      quantityLeft - more than zero if it is not enought orders to process all quantity
-func (ob *Orderbook) CalculatePriceAfterExecution(side Side,quantity decimal.Decimal) (price decimal.Decimal, err error) {
-	price := decimal.Zero
+func (ob *OrderBook) CalculatePriceAfterExecution(side Side,quantity decimal.Decimal) (price decimal.Decimal, err error) {
+	price = decimal.Zero
 
 	var (
 		level *OrderQueue
