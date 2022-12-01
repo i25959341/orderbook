@@ -44,6 +44,45 @@ type PriceLevel struct {
 //      partial      - not nil if your order has done but top order is not fully done
 //      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
 //      quantityLeft - more than zero if it is not enought orders to process all quantity
+func (ob *Orderbook) CalculatePriceAfterExecution(side Side,quantity decimal.Decimal) (price decimal.Decimal, err error) {
+	price := decimal.Zero
+
+	var (
+		level *OrderQueue
+		iter  func(decimal.Decimal) *OrderQueue
+	)
+	if side == Buy {
+		level = ob.asks.MinPriceQueue()
+		iter = ob.asks.GreaterThan
+	}	else {
+		level = ob.bids.MaxPriceQueue()
+		iter = ob.bids.LessThan
+	}
+	for quantity.Sign() > 0 && level != nil {
+		levelVolume := level.Volume()
+		levelPrice := level.Price()
+		if quantity.GreaterThanOrEqual(levelVolume) {
+			price = levelPrice
+			quantity = quantity.Sub(levelVolume)
+			level = iter(levelPrice)
+		} else {
+			price = levelPrice
+			quantity = decimal.Zero
+		}
+	}
+	if quantity.Sign() > 0 {
+		err = ErrInsufficientQuantity
+	}
+
+	return
+
+
+}
+
+
+
+
+
 func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, partialQuantityProcessed, quantityLeft decimal.Decimal, err error) {
 	if quantity.Sign() <= 0 {
 		return nil, nil, decimal.Zero, decimal.Zero, ErrInvalidQuantity
