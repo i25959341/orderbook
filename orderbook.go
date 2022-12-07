@@ -70,9 +70,6 @@ func (ob *OrderBook) CalculatePriceAfterExecution(side Side,quantity decimal.Dec
 			quantity = decimal.Zero
 		}
 	}
-	if quantity.Sign() > 0 {
-		err = ErrInsufficientQuantity
-	}
 
 	return
 
