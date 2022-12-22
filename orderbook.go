@@ -265,11 +265,8 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	return ob.asks.Remove(e)
 }
 
-func (ob *OrderBook) GetOrders() *list.Element {
-	e, ok := ob.orders	
-	if !ok {
-		return nil
-	}
+func (ob *OrderBook) GetOrders() *list {
+	e := ob.orders
 	return e
 }
 
