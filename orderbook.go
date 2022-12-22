@@ -265,10 +265,6 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	return ob.asks.Remove(e)
 }
 
-func (ob *OrderBook) GetOrders() *list {
-	e := ob.orders
-	return e
-}
 
 // CalculateMarketPrice returns total market price for requested quantity
 // if err is not nil price returns total price of all levels in side
