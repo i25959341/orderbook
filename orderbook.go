@@ -270,7 +270,7 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 // if err is not nil price returns total price of all levels in side
 func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (price decimal.Decimal,quant decimal.Decimal, err error) {
 	price = decimal.Zero
-	quant = decimal.Zero
+	quant := decimal.Zero
 	var (
 		level *OrderQueue
 		iter  func(decimal.Decimal) *OrderQueue
@@ -289,8 +289,8 @@ func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (
 		levelPrice := level.Price()
 		if quantity.GreaterThanOrEqual(levelVolume) {
 			price = price.Add(levelPrice.Mul(levelVolume))
-			quant = quant.Add(levelVolume)
 			quantity = quantity.Sub(levelVolume)
+			quant = quant.Add(levelVolume)
 			level = iter(levelPrice)
 		} else {
 			price = price.Add(levelPrice.Mul(quantity))
