@@ -290,14 +290,13 @@ func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (
 		if quantity.GreaterThanOrEqual(levelVolume) {
 			price = price.Add(levelPrice.Mul(levelVolume))
 			quantity = quantity.Sub(levelVolume)
-			endquant = quantity
 			level = iter(levelPrice)
 		} else {
 			price = price.Add(levelPrice.Mul(quantity))
 			quantity = decimal.Zero
 		}
 	}
-
+	endquant = quantity 
 	if quantity.Sign() > 0 {
 		err = ErrInsufficientQuantity
 	}
