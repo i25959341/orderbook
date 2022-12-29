@@ -294,7 +294,7 @@ func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (
 			level = iter(levelPrice)
 		} else {
 			price = price.Add(levelPrice.Mul(quantity))
-			quant = quant.Add(levelVolume)
+			quant = quant.Add(quantity)
 			quantity = decimal.Zero
 		}
 	} 
