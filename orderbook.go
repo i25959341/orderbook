@@ -44,6 +44,42 @@ type PriceLevel struct {
 //      partial      - not nil if your order has done but top order is not fully done
 //      partialQuantityProcessed - if partial order is not nil this result contains processed quatity from partial order
 //      quantityLeft - more than zero if it is not enought orders to process all quantity
+func (ob *OrderBook) CalculatePriceAfterExecution(side Side,quantity decimal.Decimal) (price decimal.Decimal, err error) {
+	price = decimal.Zero
+
+	var (
+		level *OrderQueue
+		iter  func(decimal.Decimal) *OrderQueue
+	)
+	if side == Buy {
+		level = ob.asks.MinPriceQueue()
+		iter = ob.asks.GreaterThan
+	}	else {
+		level = ob.bids.MaxPriceQueue()
+		iter = ob.bids.LessThan
+	}
+	for quantity.Sign() > 0 && level != nil {
+		levelVolume := level.Volume()
+		levelPrice := level.Price()
+		if quantity.GreaterThanOrEqual(levelVolume) {
+			price = levelPrice
+			quantity = quantity.Sub(levelVolume)
+			level = iter(levelPrice)
+		} else {
+			price = levelPrice
+			quantity = decimal.Zero
+		}
+	}
+
+	return
+
+
+}
+
+
+
+
+
 func (ob *OrderBook) ProcessMarketOrder(side Side, quantity decimal.Decimal) (done []*Order, partial *Order, partialQuantityProcessed, quantityLeft decimal.Decimal, err error) {
 	if quantity.Sign() <= 0 {
 		return nil, nil, decimal.Zero, decimal.Zero, ErrInvalidQuantity
@@ -229,11 +265,12 @@ func (ob *OrderBook) CancelOrder(orderID string) *Order {
 	return ob.asks.Remove(e)
 }
 
+
 // CalculateMarketPrice returns total market price for requested quantity
 // if err is not nil price returns total price of all levels in side
-func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (price decimal.Decimal, err error) {
+func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (price decimal.Decimal,quant decimal.Decimal, err error) {
 	price = decimal.Zero
-
+	quant = decimal.Zero
 	var (
 		level *OrderQueue
 		iter  func(decimal.Decimal) *OrderQueue
@@ -253,13 +290,14 @@ func (ob *OrderBook) CalculateMarketPrice(side Side, quantity decimal.Decimal) (
 		if quantity.GreaterThanOrEqual(levelVolume) {
 			price = price.Add(levelPrice.Mul(levelVolume))
 			quantity = quantity.Sub(levelVolume)
+			quant = quant.Add(levelVolume)
 			level = iter(levelPrice)
 		} else {
 			price = price.Add(levelPrice.Mul(quantity))
+			quant = quant.Add(quantity)
 			quantity = decimal.Zero
 		}
-	}
-
+	} 
 	if quantity.Sign() > 0 {
 		err = ErrInsufficientQuantity
 	}
