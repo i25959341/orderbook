@@ -240,7 +240,7 @@ func TestPriceCalculation(t *testing.T) {
 	addDepth(ob, "15-", decimal.New(10, 0))
 	t.Log(ob)
 
-	price, err := ob.CalculateMarketPrice(Buy, decimal.New(115, 0))
+	price, _, err := ob.CalculateMarketPrice(Buy, decimal.New(115, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +249,7 @@ func TestPriceCalculation(t *testing.T) {
 		t.Fatal("invalid price", price)
 	}
 
-	price, err = ob.CalculateMarketPrice(Buy, decimal.New(200, 0))
+	price, _, err = ob.CalculateMarketPrice(Buy, decimal.New(200, 0))
 	if err == nil {
 		t.Fatal("invalid quantity count")
 	}
@@ -260,7 +260,7 @@ func TestPriceCalculation(t *testing.T) {
 
 	// -------
 
-	price, err = ob.CalculateMarketPrice(Sell, decimal.New(115, 0))
+	price, _, err = ob.CalculateMarketPrice(Sell, decimal.New(115, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,7 +269,7 @@ func TestPriceCalculation(t *testing.T) {
 		t.Fatal("invalid price", price)
 	}
 
-	price, err = ob.CalculateMarketPrice(Sell, decimal.New(200, 0))
+	price, _, err = ob.CalculateMarketPrice(Sell, decimal.New(200, 0))
 	if err == nil {
 		t.Fatal("invalid quantity count")
 	}
